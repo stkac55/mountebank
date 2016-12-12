@@ -1,0 +1,18 @@
+{
+    "ignore": [
+
+    ],
+    "test": [
+        "**/test/**",
+        "**/functionalTest/**",
+        "**/performanceTest/**"
+    ],
+    "dependencies": {
+        "mute": [
+            "mocha"
+        ]
+    },
+    "critics": {
+      "lint": { "engine": "eslint" }
+    }
+}

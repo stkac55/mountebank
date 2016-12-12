@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e
+
+PLATFORM=$1
+ARCH=$2
+MB_VERSION=$3
+MB_DIRNAME=mountebank-v$MB_VERSION-$PLATFORM-$ARCH
+
+if [ ! -d "dist/$MB_DIRNAME" ]; then
+    scripts/dist/createSelfContainedDir $PLATFORM $ARCH $MB_VERSION
+fi
+
+cd dist
+
+echo "Creating tarball for $PLATFORM-$ARCH..."
+tar czvf $MB_DIRNAME.tar.gz $MB_DIRNAME > /dev/null
+echo "Done"
+
+cd ..
