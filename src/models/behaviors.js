@@ -233,6 +233,130 @@ function addLookupErrors (config, errors) {
     }
 }
 
+function addArrayhandlingkeyerrors (config, errors) {
+    if (!defined(config.key)) {
+        return;
+    }
+    if (!ofType(config.key, 'Object')) {
+        missingRequiredFields(config.key, 'from', 'using').forEach(function (field) {
+            errors.push(exceptions.ValidationError('arrayHandling behavior "key.' + field + '" field required',
+                { source: config.key }));
+        });
+    }
+    addArrayUsingkeyErrors(config.key, errors);
+}
+
+
+function addArrayUsingkeyErrors (config, errors) {
+    console.log('config.using  ' + JSON.stringify(config.using));
+    if (!defined(config.using)) {
+        return;
+    }
+    missingRequiredFields(config.using, 'method', 'selector').forEach(function (field) {
+        errors.push(exceptions.ValidationError('copy behavior "using.' + field + '" field required',
+            { source: config }));
+    });
+    addArrayusingErrors(config, errors);
+}
+
+
+function addArrayusingErrors (config, errors) {
+    if ((!defined(config.using.method)) || (!defined(config.using.selector))) {
+        return;
+    }
+    if (!ofType(config.using, 'object')) {
+        errors.push(exceptions.ValidationError('using should be an object',
+            { source: config.using }));
+    }
+    if (!ofType(config.using.method, 'string')) {
+        errors.push(exceptions.ValidationError('method should be an string',
+            { source: config.using.method }));
+    }
+    if (!util.isArray(config.using.selector)) {
+        errors.push(exceptions.ValidationError('"selector" behavior must be an array',
+            { source: config }));
+    }
+}
+
+function addArrayHandlingarraycopyreqarrayErrors (config, errors) {
+    if (!defined(config.arrayCopy.reqArray)) {
+        return;
+    }
+    if (!ofType(config.arrayCopy.reqArray, 'string')) {
+        errors.push(exceptions.ValidationError('lookup behavior "config.arrayCopy.reqArray" field must be a string, representing the array block tag line',
+            { source: config }));
+    }
+}
+
+function addArrayHandlingarraycopyresarrayErrors (config, errors) {
+    if (!defined(config.arrayCopy.resArray)) {
+        return;
+    }
+    if (!ofType(config.arrayCopy.resArray, 'string')) {
+        errors.push(exceptions.ValidationError('lookup behavior "config.arrayCopy.resArray" field must be a string, representing the whole response array block',
+            { source: config }));
+    }
+}
+
+function addArrayHandlingarraycopyintoresarrayErrors (config, errors) {
+    if (!defined(config.arrayCopy.intoResarray)) {
+        return;
+    }
+    if (!util.isArray(config.arrayCopy.intoResarray)) {
+        errors.push(exceptions.ValidationError('"arrayCopy.intoResarray" behavior must be an array',
+            { source: config }));
+    }
+}
+
+function addArrayHandlingarraycopyErrors (config, errors) {
+    if (!ofType(config.arrayCopy, 'object')) {
+        errors.push(exceptions.ValidationError('arrayHandling behavior "arrayCopy" field must be an object',
+            { source: config }));
+        return;
+    }
+
+    missingRequiredFields(config.arrayCopy, 'reqArray', 'resArray', 'intoResarray').forEach(function (field) {
+        errors.push(exceptions.ValidationError('arrayHandling behavior "arrayCopy.' + field + '" field required',
+            { source: config }));
+    });
+    addArrayHandlingarraycopyreqarrayErrors(config, errors);
+    addArrayHandlingarraycopyresarrayErrors(config, errors);
+    addArrayHandlingarraycopyintoresarrayErrors(config, errors);
+}
+
+
+function addArraycopyerrors (config, errors) {
+    if (!defined(config.arrayCopy)) {
+        return;
+    }
+    if (!ofType(config.arrayCopy, 'object')) {
+        errors.push(exceptions.ValidationError(
+            'arrayHandling behavior "arrayCopy" field must be an object',
+            { source: config }));
+        return;
+    }
+    else {
+        addArrayHandlingarraycopyErrors(config, errors);
+    }
+}
+
+function addArrayhandlingerrors (config, errors) {
+    if (!util.isArray(config.arrayHandling)) {
+        errors.push(exceptions.ValidationError('"arrayHandling" behavior must be an array',
+            { source: config }));
+    }
+    else {
+        config.arrayHandling.forEach(function (arrayConfig) {
+            missingRequiredFields(arrayConfig, 'key', 'arrayCopy', 'dataInto').forEach(function (field) {
+                errors.push(exceptions.ValidationError('arrayHandling behavior "' + field + '" field required',
+                    { source: arrayConfig }));
+            });
+            addArrayhandlingkeyerrors(arrayConfig, errors);
+            addArraycopyerrors(arrayConfig, errors);
+        });
+    }
+}
+
 function addShellTransformErrors (config, errors) {
     if (!ofType(config.shellTransform, 'string')) {
         errors.push(exceptions.ValidationError('"shellTransform" value must be a string of the path to a command line application',
@@ -259,6 +383,7 @@ function validate (config) {
             repeat: addRepeatErrors,
             copy: addCopyErrors,
             lookup: addLookupErrors,
+            arrayHandling: addArrayhandlingerrors,
             shellTransform: addShellTransformErrors,
             decorate: addDecorateErrors
         };
@@ -616,6 +741,69 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
         logger.error(error);
     });
 }
+// Array Handling main functions xpathArrayvalues, arrayHandling, arrayCopy
+
+function xpathArrayvalues (from, copyConfig, logger) {
+    var xvalue = [];
+    (copyConfig.using.selector).forEach(function (selector) {
+        var selectionFn = function () {
+            var value = xpath.select(selector, copyConfig.using.ns, from, logger);
+            xvalue.push(value);
+        };
+        return getMatches(selectionFn, selector, logger);
+    });
+    return xvalue;
+}
+
+function arrayHandling (originalRequest, responsePromise, config, logger) {
+    return responsePromise.then(function (response) {
+        config.forEach(function (arrayConfig) {
+            var from = getFrom(originalRequest, arrayConfig.key.from),
+                // using = arrayConfig.key.using || {},
+                fnMap = {
+                    xpath: xpathArrayvalues
+                },
+                values = [];
+            if (fnMap[arrayConfig.key.using.method]) {
+                values = fnMap[arrayConfig.key.using.method](from, arrayConfig.key, logger);
+            }
+            var valuesinString = values.toString();
+            var splitValues = valuesinString.split(',');
+            // console.log("valuesinString  --- > "+JSON.stringify(valuesinString));
+            arrayCopy(originalRequest, arrayConfig, response, splitValues, logger);
+        });
+        return Q(response);
+    });
+}
+
+function arrayCopy (originalRequest, arrayConfig, response, values) {
+    var replaceResponse = '',
+        reqArray = arrayConfig.arrayCopy.reqArray,
+        resArray = arrayConfig.arrayCopy.resArray,
+        intoResarray = arrayConfig.arrayCopy.intoResarray,
+        dataInto = arrayConfig.dataInto,
+        countReqArray = (originalRequest.body.match(new RegExp(reqArray, 'g')) || []).length,
+        i, j, k, t, counter = 0,
+        concatResArray = '';
+
+    for (k = 0; k < countReqArray; k += 1) {
+        concatResArray = concatResArray + '\n\r' + resArray;
+    }
+
+    for (i = 0; i < countReqArray; i += 1) {
+        for (t = 0; t < intoResarray.length; t += 1) {
+            for (j = counter; j < values.length; j += 1) {
+                var regexstring = intoResarray[t];
+                if (concatResArray.search(new RegExp(regexstring + '\\b', '')) !== -1) {
+                    concatResArray = concatResArray.replace((new RegExp(regexstring + '\\b')), values[j]);
+                    counter += 1;
+                }
+            }
+        }
+    }
+    replaceResponse = response.body.replace(dataInto, concatResArray);
+    response.body = replaceResponse;
+}
 
 /**
  * The entry point to execute all behaviors provided in the API
@@ -642,13 +830,16 @@ function execute (request, response, behaviors, logger) {
         shellTransformFn = behaviors.shellTransform ?
             function (result) { return shellTransform(request, result, behaviors.shellTransform, logger); } :
             combinators.identity,
+        arrayHandlingFn = behaviors.arrayHandling ?
+            function (result) { return arrayHandling(request, result, behaviors.arrayHandling, logger); } :
+            combinators.identity,
         decorateFn = behaviors.decorate ?
             function (result) { return decorate(request, result, behaviors.decorate, logger); } :
             combinators.identity;
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));
 
-    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, waitFn, Q)(response);
+    return combinators.compose(decorateFn, arrayHandlingFn, shellTransformFn, copyFn, lookupFn, waitFn, Q)(response);
 }
 
 module.exports = {
