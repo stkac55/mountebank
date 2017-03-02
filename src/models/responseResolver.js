@@ -9,6 +9,10 @@ var helpers = require('../util/helpers'),
     errors = require('../util/errors'),
     behaviors = require('./behaviors'),
     Q = require('q'),
+    // JSONPath = require('jsonpath-plus'),
+    // xpath = require('./xpath'),
+    // jsonpath = require('./jsonpath'),
+    // parseJson = require('parse-json'),
     stringify = require('json-stable-stringify');
 
 /**
@@ -65,6 +69,76 @@ function create (proxy, postProcess) {
         return result;
     }
 
+    function nodeValue (node) {
+        if (node.nodeType === node.TEXT_NODE) {
+            return node.nodeValue;
+        }
+        else if (node.nodeType === node.ATTRIBUTE_NODE) {
+            return node.value;
+        }
+        else if (node.firstChild) {
+        // Converting to a string allows exists to return true if the node exists,
+        // even if there's no data
+            return node.firstChild.data + '';
+        }
+        else {
+            return node.data + '';
+        }
+    }
+
+    function multipleXpathvalues (predicate, title) {
+        var i, buildPredicate = [], storePredicate = [], finalPredicate = [];
+        for (i = 0; i < title.length; i += 1) {
+            buildPredicate.push(predicate);
+        }
+
+        buildPredicate.forEach(function (storeObject, j) {
+            storeObject.deepEquals.body = title[j].toString();
+            storePredicate.push(JSON.parse(JSON.stringify(storeObject)));
+        });
+        storePredicate.forEach(function (xpathObject, t) {
+            xpathObject.xpath.selector = '(' + xpathObject.xpath.selector + ')' + '[' + (t + 1) + ']';
+            predicate.xpath = xpathObject.xpath;
+            finalPredicate.push(JSON.parse(JSON.stringify(xpathObject)));
+        });
+        return finalPredicate;
+    }
+
+    function xpathValue (request, matcher, predicate, predicates) {
+        var reqBody = (request.body).toString();
+      //  var value = matcher.matches.xpath;
+        predicate.deepEquals = {};
+        if (reqBody !== '') {
+            var xpath = require('xpath');
+            var dom = require('xmldom').DOMParser;
+            var doc = new dom().parseFromString(request.body);
+            var savePath = matcher.matches.xpath.selector;
+            var ns = matcher.matches.xpath.ns;
+            if (typeof ns !== 'undefined') {
+                var selectFn = xpath.useNamespaces(ns || {}),
+                    result = selectFn(savePath, doc),
+                    title = result.map(nodeValue);
+            }
+            else {
+                title = xpath.select(savePath, doc);
+            }
+            if (title.length > 1) {
+                for (var i = 0; i < title.length; i += 1) {
+                    predicate.deepEquals.body = title[i].toString();
+                    predicate.xpath = matcher.matches.xpath;
+                }
+                predicate = multipleXpathvalues(predicate, title);
+                for (var j = 1; j < title.length; j += 1) {
+                    predicates.push(predicate[j - 1]);
+                }
+            }
+            else {
+                predicate.deepEquals.body = title.toString();
+                predicate.xpath = matcher.matches.xpath;
+            }
+        }
+        return predicates;
+    }
     function predicatesFor (request, matchers) {
         var predicates = [];
 
@@ -85,6 +159,12 @@ function create (proxy, postProcess) {
                 if (value === true) {
                     predicate.deepEquals = {};
                     predicate.deepEquals[fieldName] = request[fieldName];
+                }
+                else if ((fieldName === 'xpath') && (value !== true)) {
+                    var fnMap = {
+                        xpath: xpathValue
+                    };
+                    fnMap[fieldName](request, matcher, predicate, predicates);
                 }
                 else {
                     predicate.equals = {};
