@@ -253,7 +253,7 @@ function addArrayUsingkeyErrors (config, errors) {
         return;
     }
     missingRequiredFields(config.using, 'method', 'selector').forEach(function (field) {
-        errors.push(exceptions.ValidationError('copy behavior "using.' + field + '" field required',
+        errors.push(exceptions.ValidationError('arrayHandling behavior "using.' + field + '" field required',
             { source: config }));
     });
     addArrayusingErrors(config, errors);
@@ -283,7 +283,7 @@ function addArrayHandlingarraycopyreqarrayErrors (config, errors) {
         return;
     }
     if (!ofType(config.arrayCopy.reqArray, 'string')) {
-        errors.push(exceptions.ValidationError('lookup behavior "config.arrayCopy.reqArray" field must be a string, representing the array block tag line',
+        errors.push(exceptions.ValidationError('arrayHandling behavior "config.arrayCopy.reqArray" field must be a string, representing the array block tag line',
             { source: config }));
     }
 }
@@ -293,7 +293,7 @@ function addArrayHandlingarraycopyresarrayErrors (config, errors) {
         return;
     }
     if (!ofType(config.arrayCopy.resArray, 'string')) {
-        errors.push(exceptions.ValidationError('lookup behavior "config.arrayCopy.resArray" field must be a string, representing the whole response array block',
+        errors.push(exceptions.ValidationError('arrayHandling behavior "config.arrayCopy.resArray" field must be a string, representing the whole response array block',
             { source: config }));
     }
 }
@@ -324,6 +324,17 @@ function addArrayHandlingarraycopyErrors (config, errors) {
     addArrayHandlingarraycopyintoresarrayErrors(config, errors);
 }
 
+function addDataintoerrors (config, behaviorName, errors) {
+    if (!defined(config.dataInto)) {
+        return;
+    }
+    if (!ofType(config.dataInto, 'string')) {
+        errors.push(exceptions.ValidationError(
+            behaviorName + ' behavior "dataInto" field must be a string, representing the token to replace in response fields',
+            { source: config }
+        ));
+    }
+}
 
 function addArraycopyerrors (config, errors) {
     if (!defined(config.arrayCopy)) {
@@ -353,6 +364,7 @@ function addArrayhandlingerrors (config, errors) {
             });
             addArrayhandlingkeyerrors(arrayConfig, errors);
             addArraycopyerrors(arrayConfig, errors);
+            addDataintoerrors(arrayConfig, 'arrayHandling', errors);
         });
     }
 }
