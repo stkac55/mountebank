@@ -76,7 +76,6 @@ function setup (protocolName, createBaseServer) {
                 // has shutdown, causing difficult to track down bugs when
                 // multiple tests are run.
                 response.headers[headerNameFor('Connection', response.headers)] = 'close';
-            //    response.headers[headerNameFor('Connection', response.headers)] = 'keep-alive';
             }
 
             if (hasHeader('Content-Length', response.headers)) {
