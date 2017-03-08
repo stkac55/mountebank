@@ -68,15 +68,15 @@ function setup (protocolName, createBaseServer) {
             }
 
             // Allow overriding connection header by explicitly passing it in to the defaultResponse field only
-            if (!hasHeader('Connection', defaultHeaders)) {
+            if (!hasHeader('Connection', response.headers)) {
                 // We don't want to use keepalive connections, because a test case
                 // may shutdown the stub, which prevents new connections for
                 // the port, but that won't prevent the system under test
                 // from reusing an existing TCP connection after the stub
                 // has shutdown, causing difficult to track down bugs when
                 // multiple tests are run.
-            //    response.headers[headerNameFor('Connection', response.headers)] = 'close';
-                response.headers[headerNameFor('Connection', response.headers)] = 'keep-alive';
+                response.headers[headerNameFor('Connection', response.headers)] = 'close';
+            //    response.headers[headerNameFor('Connection', response.headers)] = 'keep-alive';
             }
 
             if (hasHeader('Content-Length', response.headers)) {

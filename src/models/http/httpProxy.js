@@ -73,7 +73,7 @@ function create (logger) {
             };
         // Modify header to change Connection header from close to keep-alive
         // options.headers.connection = 'close';
-        options.headers.connection = 'keep-alive';
+        // options.headers.connection = 'keep-alive';
         options.headers.host = hostnameFor(parts.protocol, parts.hostname, options.port);
         setProxyAgent(parts, options);
 
