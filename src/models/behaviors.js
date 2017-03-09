@@ -476,6 +476,69 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
     });
 }
 
+// Array Handling main functions xpathArrayvalues, arrayHandling, arrayCopy
+function xpathArrayvalues (from, copyConfig, logger) {
+    var xvalue = [];
+    (copyConfig.using.selector).forEach(function (selector) {
+        var selectionFn = function () {
+            var value = xpath.select(selector, copyConfig.using.ns, from, logger);
+            xvalue.push(value);
+        };
+        return getMatches(selectionFn, selector, logger);
+    });
+    return xvalue;
+}
+
+function arrayHandling (originalRequest, responsePromise, config, logger) {
+    return responsePromise.then(function (response) {
+        config.forEach(function (arrayConfig) {
+            var from = getFrom(originalRequest, arrayConfig.key.from),
+                 // using = arrayConfig.key.using || {},
+                fnMap = {
+                    xpath: xpathArrayvalues
+                },
+                values = [];
+            if (fnMap[arrayConfig.key.using.method]) {
+                values = fnMap[arrayConfig.key.using.method](from, arrayConfig.key, logger);
+            }
+            var valuesinString = values.toString();
+            var splitValues = valuesinString.split(',');
+             // console.log("valuesinString  - > "+JSON.stringify(valuesinString));
+            arrayCopy(originalRequest, arrayConfig, response, splitValues, logger);
+        });
+        return Q(response);
+    });
+}
+
+function arrayCopy (originalRequest, arrayConfig, response, values) {
+    var replaceResponse = '',
+        reqArray = arrayConfig.arrayCopy.reqArray,
+        resArray = arrayConfig.arrayCopy.resArray,
+        intoResarray = arrayConfig.arrayCopy.intoResarray,
+        dataInto = arrayConfig.dataInto,
+        countReqArray = (originalRequest.body.match(new RegExp(reqArray, 'g')) || []).length,
+        i, j, k, t, counter = 0,
+        concatResArray = '';
+
+    for (k = 0; k < countReqArray; k += 1) {
+        concatResArray = concatResArray + '\n\r' + resArray;
+    }
+
+    for (i = 0; i < countReqArray; i += 1) {
+        for (t = 0; t < intoResarray.length; t += 1) {
+            for (j = counter; j < values.length; j += 1) {
+                var regexstring = intoResarray[t];
+                if (concatResArray.search(new RegExp(regexstring + '\\b', '')) !== 1) {
+                    concatResArray = concatResArray.replace((new RegExp(regexstring + '\\b')), values[j]);
+                    counter += 1;
+                }
+            }
+        }
+    }
+    replaceResponse = response.body.replace(dataInto, concatResArray);
+    response.body = replaceResponse;
+}
+
 /**
  * The entry point to execute all behaviors provided in the API
  * @param {Object} request - The request object
