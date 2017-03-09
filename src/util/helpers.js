@@ -3,6 +3,15 @@
 /** @module */
 
 /**
+ * Returns true if obj is a defined value
+ * @param {Object} obj - the value to test
+ * @returns {boolean}
+ */
+function defined (obj) {
+    return typeof obj !== 'undefined';
+}
+
+/**
  * Returns the text used for logging purposes related to this socket
  * @param {Object} socket - the socket
  * @returns {string}
@@ -34,7 +43,7 @@ function clone (obj) {
 function merge (defaults, overrides) {
     var result = clone(defaults);
     Object.keys(overrides).forEach(function (key) {
-        if (typeof overrides[key] === 'object') {
+        if (typeof overrides[key] === 'object' && overrides[key] !== null) {
             result[key] = merge(result[key] || {}, overrides[key]);
         }
         else {
@@ -45,6 +54,7 @@ function merge (defaults, overrides) {
 }
 
 module.exports = {
+    defined: defined,
     socketName: socketName,
     clone: clone,
     merge: merge

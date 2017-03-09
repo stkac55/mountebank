@@ -5,35 +5,6 @@
  * @module
  */
 
-var AbstractServer = require('../abstractServer'),
-    Q = require('q'),
-    winston = require('winston'),
-    inherit = require('../../util/inherit'),
-    helpers = require('../../util/helpers'),
-    combinators = require('../../util/combinators'),
-    StubRepository = require('../stubRepository'),
-    ResponseResolver = require('../responseResolver'),
-    HttpProxy = require('./httpProxy'),
-    DryRunValidator = require('../dryRunValidator'),
-    events = require('events'),
-    HttpRequest = require('./httpRequest');
-
-function headerNameFor (headerName, headers) {
-    var result = Object.keys(headers).find(function (header) {
-        return header.toLowerCase() === headerName.toLowerCase();
-    });
-    if (typeof result === 'undefined') {
-        result = headerName;
-    }
-    return result;
-}
-
-function hasHeader (headerName, headers) {
-    return Object.keys(headers).some(function (header) {
-        return header.toLowerCase() === headerName.toLowerCase();
-    });
-}
-
 /**
  * Sets up the creation method for the given protocol
  * @param {string} protocolName - http or https
@@ -52,7 +23,8 @@ function setup (protocolName, createBaseServer) {
 
         function postProcess (stubResponse) {
             /* eslint complexity: 0 */
-            var defaultResponse = options.defaultResponse || {},
+            var headersHelper = require('./headersHelper'),
+                defaultResponse = options.defaultResponse || {},
                 defaultHeaders = defaultResponse.headers || {},
                 response = {
                     statusCode: stubResponse.statusCode || defaultResponse.statusCode || 200,
@@ -68,27 +40,29 @@ function setup (protocolName, createBaseServer) {
             }
 
             // Allow overriding connection header by explicitly passing it in to the defaultResponse field only
-            if (!hasHeader('Connection', response.headers)) {
+            if (!headersHelper.hasHeader('Connection', response.headers)) {
                 // We don't want to use keepalive connections, because a test case
                 // may shutdown the stub, which prevents new connections for
                 // the port, but that won't prevent the system under test
                 // from reusing an existing TCP connection after the stub
                 // has shutdown, causing difficult to track down bugs when
                 // multiple tests are run.
-                response.headers[headerNameFor('Connection', response.headers)] = 'close';
+                response.headers[headersHelper.headerNameFor('Connection', response.headers)] = 'close';
             }
 
-            if (hasHeader('Content-Length', response.headers)) {
-                response.headers[headerNameFor('Content-Length', response.headers)] = Buffer.byteLength(response.body, encoding);
+            if (headersHelper.hasHeader('Content-Length', response.headers)) {
+                response.headers[headersHelper.headerNameFor('Content-Length', response.headers)] =
+                    Buffer.byteLength(response.body, encoding);
             }
             return response;
         }
 
-        var proxy = HttpProxy.create(logger),
-            resolver = ResponseResolver.create(proxy, postProcess),
-            stubs = StubRepository.create(resolver, options.debug, 'utf8'),
+        var combinators = require('../../util/combinators'),
+            proxy = require('./httpProxy').create(logger),
+            resolver = require('../responseResolver').create(proxy, postProcess),
+            stubs = require('../stubRepository').create(resolver, options.debug, 'utf8'),
             baseServer = createBaseServer(options),
-            result = inherit.from(events.EventEmitter, {
+            result = require('../../util/inherit').from(require('events').EventEmitter, {
                 errorHandler: function (error, container) {
                     container.response.writeHead(500, { 'content-type': 'application/json' });
                     container.response.end(JSON.stringify({ errors: [error] }), 'utf8');
@@ -99,7 +73,8 @@ function setup (protocolName, createBaseServer) {
                 formatRequest: combinators.identity,
                 formatResponse: combinators.identity,
                 respond: function (httpRequest, container) {
-                    var scopedLogger = logger.withScope(helpers.socketName(container.request.socket));
+                    var helpers = require('../../util/helpers'),
+                        scopedLogger = logger.withScope(helpers.socketName(container.request.socket));
 
                     return stubs.resolve(httpRequest, scopedLogger, this.state).then(function (stubResponse) {
                         var mode = stubResponse._mode ? stubResponse._mode : 'text',
@@ -127,7 +102,7 @@ function setup (protocolName, createBaseServer) {
         result.close = function (callback) { server.close(callback); };
 
         result.listen = function (port) {
-            var deferred = Q.defer();
+            var deferred = require('q').defer();
             server.listen(port, function () { deferred.resolve(server.address().port); });
             return deferred.promise;
         };
@@ -148,17 +123,17 @@ function setup (protocolName, createBaseServer) {
         var implementation = {
             protocolName: protocolName,
             createServer: createServer,
-            Request: HttpRequest
+            Request: require('./httpRequest')
         };
 
         return {
             name: protocolName,
-            create: AbstractServer.implement(implementation, recordRequests, debug, winston).create,
+            create: require('../abstractServer').implement(implementation, recordRequests, debug, require('winston')).create,
             Validator: {
                 create: function () {
-                    return DryRunValidator.create({
-                        StubRepository: StubRepository,
-                        testRequest: HttpRequest.createTestRequest(),
+                    return require('../dryRunValidator').create({
+                        StubRepository: require('../stubRepository'),
+                        testRequest: require('./httpRequest').createTestRequest(),
                         testProxyResponse: {
                             statusCode: 200,
                             headers: {},

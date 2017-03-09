@@ -5,11 +5,6 @@
  * @module
  */
 
-var Q = require('q'),
-    helpers = require('../util/helpers'),
-    exceptions = require('../util/errors'),
-    url = require('url');
-
 /**
  * Creates the imposters controller
  * @param {Object} protocols - the protocol implementations supported by mountebank
@@ -19,23 +14,20 @@ var Q = require('q'),
  * @returns {{get: get, post: post, del: del, put: put}}
  */
 function create (protocols, imposters, Imposter, logger) {
+    var exceptions = require('../util/errors'),
+        helpers = require('../util/helpers');
 
     function queryIsFalse (query, key) {
-        if (query[key] === undefined) {
-            return true;
-        }
-        return query[key].toLowerCase() !== 'false';
+        return !helpers.defined(query[key]) || query[key].toLowerCase() !== 'false';
     }
 
     function queryBoolean (query, key) {
-        if (query[key] === undefined) {
-            return false;
-        }
-        return query[key].toLowerCase() === 'true';
+        return helpers.defined(query[key]) && query[key].toLowerCase() === 'true';
     }
 
     function deleteAllImposters () {
-        var ids = Object.keys(imposters),
+        var Q = require('q'),
+            ids = Object.keys(imposters),
             promises = ids.map(function (id) { return imposters[id].stop(); });
 
         ids.forEach(function (id) { delete imposters[id]; });
@@ -43,8 +35,7 @@ function create (protocols, imposters, Imposter, logger) {
     }
 
     function validatePort (port, errors) {
-        var portIsValid = (port === undefined) ||
-            (port.toString().indexOf('.') === -1 && port > 0 && port < 65536);
+        var portIsValid = !helpers.defined(port) || (port.toString().indexOf('.') === -1 && port > 0 && port < 65536);
 
         if (!portIsValid) {
             errors.push(exceptions.ValidationError("invalid value for 'port'"));
@@ -54,7 +45,7 @@ function create (protocols, imposters, Imposter, logger) {
     function validateProtocol (protocol, errors) {
         var Protocol = protocols[protocol];
 
-        if (typeof protocol === 'undefined') {
+        if (!helpers.defined(protocol)) {
             errors.push(exceptions.ValidationError("'protocol' is a required field"));
         }
         else if (!Protocol) {
@@ -63,7 +54,8 @@ function create (protocols, imposters, Imposter, logger) {
     }
 
     function validate (request) {
-        var errors = [],
+        var Q = require('q'),
+            errors = [],
             valid = Q({ isValid: false, errors: errors });
 
         validatePort(request.port, errors);
@@ -90,6 +82,16 @@ function create (protocols, imposters, Imposter, logger) {
         response.send({ errors: [error] });
     }
 
+    function getJSON (options) {
+        return Object.keys(imposters).reduce(function (accumulator, id) {
+            return accumulator.concat(imposters[id].toJSON(options));
+        }, []);
+    }
+
+    function requestDetails (request) {
+        return helpers.socketName(request.socket) + ' => ' + JSON.stringify(request.body);
+    }
+
     /**
      * The function responding to GET /imposters
      * @memberOf module:controllers/impostersController#
@@ -99,24 +101,18 @@ function create (protocols, imposters, Imposter, logger) {
     function get (request, response) {
         response.format({
             json: function () {
-                var query = url.parse(request.url, true).query,
+                var url = require('url'),
+                    query = url.parse(request.url, true).query,
                     options = {
                         replayable: queryBoolean(query, 'replayable'),
                         removeProxies: queryBoolean(query, 'removeProxies'),
                         list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
-                    },
-                    result = Object.keys(imposters).reduce(function (accumulator, id) {
-                        return accumulator.concat(imposters[id].toJSON(options));
-                    }, []);
+                    };
 
-                response.send({ imposters: result });
+                response.send({ imposters: getJSON(options) });
             },
             html: function () {
-                var result = Object.keys(imposters).reduce(function (accumulator, id) {
-                    return accumulator.concat(imposters[id].toJSON());
-                }, []);
-
-                response.render('imposters', { imposters: result });
+                response.render('imposters', { imposters: getJSON() });
             }
         });
     }
@@ -132,9 +128,11 @@ function create (protocols, imposters, Imposter, logger) {
         var protocol = request.body.protocol,
             validationPromise = validate(request.body);
 
-        logger.debug(helpers.socketName(request.socket) + ' => ' + JSON.stringify(request.body));
+        logger.debug(requestDetails(request));
 
         return validationPromise.then(function (validation) {
+            var Q = require('q');
+
             if (validation.isValid) {
                 return Imposter.create(protocols[protocol], request.body).then(function (imposter) {
                     imposters[imposter.port] = imposter;
@@ -160,15 +158,15 @@ function create (protocols, imposters, Imposter, logger) {
      * @returns {Object} A promise for testing purposes
      */
     function del (request, response) {
-        var query = url.parse(request.url, true).query,
+        var url = require('url'),
+            query = url.parse(request.url, true).query,
             options = {
                 // default to replayable for backwards compatibility
                 replayable: queryIsFalse(query, 'replayable'),
                 removeProxies: queryBoolean(query, 'removeProxies')
             },
-            json = Object.keys(imposters).reduce(function (accumulator, id) {
-                return accumulator.concat(imposters[id].toJSON(options));
-            }, []);
+            json = getJSON(options);
+
         return deleteAllImposters().then(function () {
             response.send({ imposters: json });
         });
@@ -182,12 +180,13 @@ function create (protocols, imposters, Imposter, logger) {
      * @returns {Object} A promise for testing purposes
      */
     function put (request, response) {
-        var requestImposters = request.body.imposters || [],
+        var Q = require('q'),
+            requestImposters = request.body.imposters || [],
             validationPromises = requestImposters.map(function (imposter) {
                 return validate(imposter, logger);
             });
 
-        logger.debug(helpers.socketName(request.socket) + ' => ' + JSON.stringify(request.body));
+        logger.debug(requestDetails(request));
 
         return Q.all(validationPromises).then(function (validations) {
             var isValid = validations.every(function (validation) {

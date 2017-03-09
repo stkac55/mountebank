@@ -5,10 +5,6 @@
  * @module
  */
 
-var predicates = require('./predicates'),
-    helpers = require('../util/helpers'),
-    Q = require('q');
-
 /**
  * Creates the repository
  * @param {module:models/responseResolver} resolver - The response resolver
@@ -31,11 +27,15 @@ function create (resolver, recordMatches, encoding) {
     }
 
     function findFirstMatch (request, logger, imposterState) {
+        var helpers = require('../util/helpers');
+
         if (stubs.length === 0) {
             return undefined;
         }
         var matches = stubs.filter(function (stub) {
-            var stubPredicates = stub.predicates || [];
+            var stubPredicates = stub.predicates || [],
+                predicates = require('./predicates');
+
             return trueForAll(stubPredicates, function (predicate) {
                 return predicates.evaluate(predicate, request, encoding, logger, imposterState);
             });
@@ -46,7 +46,7 @@ function create (resolver, recordMatches, encoding) {
         }
         else {
             logger.debug('using predicate match: ' + JSON.stringify(matches[0].predicates || {}));
-            if (typeof matches[0].statefulResponses === 'undefined') {
+            if (!helpers.defined(matches[0].statefulResponses)) {
                 // This happens when the responseResolver adds a stub, but doesn't know about this hidden state
                 matches[0].statefulResponses = matches[0].responses;
             }
@@ -94,7 +94,9 @@ function create (resolver, recordMatches, encoding) {
      * @returns {Object} - The stubs
      */
     function getStubs () {
-        var result = helpers.clone(stubs);
+        var helpers = require('../util/helpers'),
+            result = helpers.clone(stubs);
+
         result.forEach(function (stub) {
             delete stub.statefulResponses;
         });
@@ -112,6 +114,7 @@ function create (resolver, recordMatches, encoding) {
     function resolve (request, logger, imposterState) {
         var stub = findFirstMatch(request, logger, imposterState) || { statefulResponses: [{ is: {} }] },
             responseConfig = stub.statefulResponses.shift(),
+            Q = require('q'),
             deferred = Q.defer();
 
         logger.debug('generating response from ' + JSON.stringify(responseConfig));

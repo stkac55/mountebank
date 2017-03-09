@@ -12,7 +12,7 @@ describe('behaviors', function () {
             var errors = behaviors.validate({ lookup: {} });
             assert.deepEqual(errors, [{
                 code: 'bad data',
-                message: '"lookup" behavior must be an array',
+                message: 'lookup behavior "lookup" field must be an array',
                 source: { lookup: {} }
             }]);
         });
@@ -40,7 +40,7 @@ describe('behaviors', function () {
             assert.deepEqual(errors, [{
                 code: 'bad data',
                 message: 'lookup behavior "key.from" field required',
-                source: config.key
+                source: config
             }]);
         });
 
@@ -54,7 +54,7 @@ describe('behaviors', function () {
             assert.deepEqual(errors, [{
                 code: 'bad data',
                 message: 'lookup behavior "key.using" field required',
-                source: config.key
+                source: config
             }]);
         });
 
@@ -68,7 +68,7 @@ describe('behaviors', function () {
             assert.deepEqual(errors, [{
                 code: 'bad data',
                 message: 'lookup behavior "key.using" field must be an object',
-                source: config.key
+                source: config
             }]);
         });
 
@@ -82,7 +82,7 @@ describe('behaviors', function () {
             assert.deepEqual(errors, [{
                 code: 'bad data',
                 message: 'lookup behavior "key.using.method" field required',
-                source: config.key
+                source: config
             }]);
         });
 
@@ -96,7 +96,7 @@ describe('behaviors', function () {
             assert.deepEqual(errors, [{
                 code: 'bad data',
                 message: 'lookup behavior "key.using.method" field must be one of [regex, xpath, jsonpath]',
-                source: config.key
+                source: config
             }]);
         });
 
@@ -110,7 +110,7 @@ describe('behaviors', function () {
             assert.deepEqual(errors, [{
                 code: 'bad data',
                 message: 'lookup behavior "key.using.selector" field required',
-                source: config.key
+                source: config
             }]);
         });
 
@@ -150,7 +150,7 @@ describe('behaviors', function () {
                 errors = behaviors.validate({ lookup: [config] });
             assert.deepEqual(errors, [{
                 code: 'bad data',
-                message: 'lookup behavior "fromDataSource" key must be one of [csv] (other data sources may be supported in the future)',
+                message: 'lookup behavior "fromDataSource" field must be one of [csv]',
                 source: config
             }]);
         });

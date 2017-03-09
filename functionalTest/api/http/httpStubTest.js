@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert'),
-    api = require('../api'),
+    api = require('../api').create(),
     BaseHttpClient = require('./baseHttpClient'),
     promiseIt = require('../../testHelpers').promiseIt,
     port = api.port + 1,
@@ -353,6 +353,21 @@ var assert = require('assert'),
                     return client.get('/', port);
                 }).then(function (response) {
                     assert.deepEqual(response.headers['content-length'], 639);
+                }).finally(function () {
+                    return api.del('/imposters');
+                });
+            });
+
+            promiseIt('should handle JSON null values', function () {
+                // https://github.com/bbyars/mountebank/issues/209
+                var stub = { responses: [{ is: { body: { name: 'test', type: null } } }] },
+                    request = { protocol: protocol, port: port, stubs: [stub], name: this.name };
+
+                return api.post('/imposters', request).then(function (response) {
+                    assert.strictEqual(response.statusCode, 201, response.body);
+                    return client.get('/', port);
+                }).then(function (response) {
+                    assert.deepEqual(JSON.parse(response.body), { name: 'test', type: null });
                 }).finally(function () {
                     return api.del('/imposters');
                 });

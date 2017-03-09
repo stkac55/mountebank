@@ -2,7 +2,7 @@
 
 var assert = require('assert'),
     HttpProxy = require('../../../src/models/http/httpProxy'),
-    api = require('../api'),
+    api = require('../api').create(),
     promiseIt = require('../../testHelpers').promiseIt,
     port = api.port + 1,
     timeout = parseInt(process.env.MB_SLOW_TEST_TIMEOUT || 3000),
@@ -116,18 +116,19 @@ describe('http proxy', function () {
                     });
                 });
             });
-        }
 
-        promiseIt('should gracefully deal with bad urls', function () {
-            return proxy.to('1 + 2', { path: '/', method: 'GET', headers: {} }, {}).then(function () {
-                assert.fail('should not have resolved promise');
-            }, function (reason) {
-                assert.deepEqual(reason, {
-                    code: 'invalid proxy',
-                    message: 'Unable to connect to "1 + 2"'
+            promiseIt('should gracefully deal with bad urls', function () {
+                return proxy.to('1 + 2', { path: '/', method: 'GET', headers: {} }, {}).then(function () {
+                    assert.fail('should not have resolved promise');
+                }, function (reason) {
+                    assert.deepEqual(reason, {
+                        code: 'invalid proxy',
+                        message: 'Unable to connect to "1 + 2"'
+                    });
                 });
             });
-        });
+        }
+
 
         ['application/octet-stream', 'audio/mpeg', 'audio/mp4', 'image/gif', 'image/jpeg', 'video/avi', 'video/mpeg'].forEach(function (mimeType) {
             promiseIt('should base64 encode ' + mimeType + ' responses', function () {

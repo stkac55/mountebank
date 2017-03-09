@@ -5,23 +5,7 @@
  * @module
  */
 
-var http = require('http'),
-    https = require('https'),
-    url = require('url'),
-    Q = require('q'),
-    querystring = require('querystring'),
-    helpers = require('../../util/helpers'),
-    errors = require('../../util/errors'),
-    HttpsProxyAgent = require('https-proxy-agent'),
-    HttpProxyAgent = require('http-proxy-agent');
-
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
-function hasHeader (headerName, headers) {
-    return Object.keys(headers).some(function (header) {
-        return header.toLowerCase() === headerName.toLowerCase();
-    });
-}
 
 /**
  * Creates the proxy
@@ -29,9 +13,10 @@ function hasHeader (headerName, headers) {
  * @returns {Object}
  */
 function create (logger) {
-
     function toUrl (path, query) {
-        var tail = querystring.stringify(query);
+        var querystring = require('querystring'),
+            tail = querystring.stringify(query);
+
         if (tail === '') {
             return path;
         }
@@ -47,6 +32,9 @@ function create (logger) {
     }
 
     function setProxyAgent (parts, options) {
+        var HttpProxyAgent = require('http-proxy-agent'),
+            HttpsProxyAgent = require('https-proxy-agent');
+
         if (process.env.http_proxy && parts.protocol === 'http:') {
             options.agent = new HttpProxyAgent(process.env.http_proxy);
         }
@@ -56,8 +44,11 @@ function create (logger) {
     }
 
     function getProxyRequest (baseUrl, originalRequest, proxyOptions) {
-        var parts = url.parse(baseUrl),
-            protocol = parts.protocol === 'https:' ? https : http,
+        var helpers = require('../../util/helpers'),
+            headersHelper = require('./headersHelper'),
+            url = require('url'),
+            parts = url.parse(baseUrl),
+            protocol = parts.protocol === 'https:' ? require('https') : require('http'),
             defaultPort = parts.protocol === 'https:' ? 443 : 80,
             options = {
                 method: originalRequest.method,
@@ -71,14 +62,13 @@ function create (logger) {
                 ciphers: proxyOptions.ciphers || 'ALL',
                 rejectUnauthorized: false
             };
-
         options.headers.host = hostnameFor(parts.protocol, parts.hostname, options.port);
         setProxyAgent(parts, options);
 
         // Avoid implicit chunked encoding (issue #132)
         if (originalRequest.body &&
-            !hasHeader('Transfer-Encoding', originalRequest.headers) &&
-            !hasHeader('Content-Length', originalRequest.headers)) {
+            !headersHelper.hasHeader('Transfer-Encoding', originalRequest.headers) &&
+            !headersHelper.hasHeader('Content-Length', originalRequest.headers)) {
             options.headers['Content-Length'] = Buffer.byteLength(originalRequest.body);
         }
 
@@ -106,26 +96,9 @@ function create (logger) {
         });
     }
 
-    function add (current, value) {
-        return Array.isArray(current) ? current.concat(value) : [current].concat(value);
-    }
-
-    function arrayifyIfExists (current, value) {
-        return current ? add(current, value) : value;
-    }
-
-    function headersFor (rawHeaders) {
-        var result = {};
-        for (var i = 0; i < rawHeaders.length; i += 2) {
-            var name = rawHeaders[i];
-            var value = rawHeaders[i + 1];
-            result[name] = arrayifyIfExists(result[name], value);
-        }
-        return result;
-    }
-
     function proxy (proxiedRequest) {
-        var deferred = Q.defer(),
+        var Q = require('q'),
+            deferred = Q.defer(),
             start = new Date();
 
         proxiedRequest.end();
@@ -141,9 +114,10 @@ function create (logger) {
                 var body = Buffer.concat(packets),
                     mode = isBinaryResponse(response.headers) ? 'binary' : 'text',
                     encoding = mode === 'binary' ? 'base64' : 'utf8',
+                    headersHelper = require('./headersHelper'),
                     stubResponse = {
                         statusCode: response.statusCode,
-                        headers: headersFor(response.rawHeaders),
+                        headers: headersHelper.headersFor(response.rawHeaders),
                         body: body.toString(encoding),
                         _mode: mode,
                         _proxyResponseTime: new Date() - start
@@ -172,7 +146,8 @@ function create (logger) {
                 originalRequest.requestFrom, direction, JSON.stringify(what), direction, proxyDestination);
         }
 
-        var deferred = Q.defer(),
+        var Q = require('q'),
+            deferred = Q.defer(),
             proxiedRequest = getProxyRequest(proxyDestination, originalRequest, options);
 
         log('=>', originalRequest);
@@ -183,6 +158,8 @@ function create (logger) {
         });
 
         proxiedRequest.once('error', function (error) {
+            var errors = require('../../util/errors');
+
             if (error.code === 'ENOTFOUND') {
                 deferred.reject(errors.InvalidProxyError('Cannot resolve ' + JSON.stringify(proxyDestination)));
             }

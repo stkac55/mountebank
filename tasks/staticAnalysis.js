@@ -120,7 +120,17 @@ module.exports = function (grunt) {
             },
             exclusions = ['node_modules', '.git', '.DS_Store', '.idea', 'images', 'dist', 'mountebank.iml', 'mb.log', '*.pid'],
             errors = [],
-            whitelist = ['grunt', 'mocha', 'istanbul', 'coveralls', 'grunt-cli', 'jsdoc', 'grunt-contrib-csslint', 'shonkwrap'];
+            whitelist = [
+                'grunt',
+                'mocha',
+                'istanbul',
+                'coveralls',
+                'grunt-cli',
+                'jsdoc',
+                'grunt-contrib-csslint',
+                'shonkwrap',
+                'codeclimate-test-reporter'
+            ];
 
         dependencies.forEach(function (dependency) {
             usedCount[dependency] = 0;
@@ -144,7 +154,7 @@ module.exports = function (grunt) {
 
     grunt.registerTask('coverage', 'Generate code coverage', function () {
         var done = this.async(),
-            command = './node_modules/.bin/istanbul cover grunt mochaTest:unit';
+            command = 'node_modules/.bin/istanbul cover node_modules/.bin/grunt mochaTest:unit';
 
         exec(command, function (error, stdout, stderr) {
             if (stdout) { console.log(stdout); }
@@ -157,8 +167,8 @@ module.exports = function (grunt) {
 
     grunt.registerTask('coveralls', 'Send coverage output to coveralls.io', function () {
         var done = this.async(),
-            mocha = './node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly test/**/*.js -- -R spec',
-            command = mocha + ' && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js';
+            mocha = 'node_modules/.bin/istanbul cover node_modules/.bin/_mocha --report lcovonly test/**/*.js -- -R spec',
+            command = mocha + ' && cat coverage/lcov.info | node_modules/coveralls/bin/coveralls.js';
 
         exec(command, function (error, stdout, stderr) {
             if (stdout) { console.log(stdout); }
@@ -167,4 +177,18 @@ module.exports = function (grunt) {
             done();
         });
     });
+
+    grunt.registerTask('_codeclimate', 'Send coverage results to codeclimate', function () {
+        var done = this.async(),
+            command = 'node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info';
+
+        exec(command, function (error, stdout, stderr) {
+            if (stdout) { console.log(stdout); }
+            if (stderr) { console.log(stderr); }
+            if (error) { throw error; }
+            done();
+        });
+    });
+
+    grunt.registerTask('codeclimate', 'Send coverage results to codeclimate', ['coverage', '_codeclimate']);
 };

@@ -5,383 +5,96 @@
  * @module
  */
 
-var helpers = require('../util/helpers'),
-    exceptions = require('../util/errors'),
-    Q = require('q'),
-    exec = require('child_process').exec,
-    util = require('util'),
-    combinators = require('../util/combinators'),
-    xpath = require('./xpath'),
-    jsonpath = require('./jsonpath'),
-    fs = require('fs'),
-    csvParse = require('csv-parse'),
-    isWindows = require('os').platform().indexOf('win') === 0;
-
-function defined (value) {
-    return typeof value !== 'undefined';
-}
-
-function ofType (value) {
-    var allowedTypes = Array.prototype.slice.call(arguments),
-        actualType = typeof value;
-
-    // remove value
-    allowedTypes.shift();
-
-    return allowedTypes.indexOf(actualType) >= 0;
-}
-
-function missingRequiredFields (obj) {
-    var requiredFields = Array.prototype.slice.call(arguments),
-        actualFields = Object.keys(obj),
-        missingFields = [];
-
-    // remove obj
-    requiredFields.shift();
-
-    requiredFields.forEach(function (field) {
-        if (actualFields.indexOf(field) < 0) {
-            missingFields.push(field);
+// The following schemas are used by both the lookup and copy behaviors and should be kept consistent
+var fromSchema = {
+        _required: true,
+        _allowedTypes: {
+            string: {},
+            object: { singleKeyOnly: true }
+        },
+        _additionalContext: 'the request field to select from'
+    },
+    intoSchema = {
+        _required: true,
+        _allowedTypes: { string: {} },
+        _additionalContext: 'the token to replace in response fields'
+    },
+    usingSchema = {
+        _required: true,
+        _allowedTypes: { object: {} },
+        method: {
+            _required: true,
+            _allowedTypes: { string: { enum: ['regex', 'xpath', 'jsonpath'] } }
+        },
+        selector: {
+            _required: true,
+            _allowedTypes: { string: {} }
         }
-    });
-    return missingFields;
-}
-
-function hasExactlyOneKey (obj) {
-    var keys = Object.keys(obj);
-    return keys.length === 1;
-}
-
-function addWaitErrors (config, errors) {
-    if (!ofType(config.wait, 'number', 'string') || (typeof config.wait === 'number' && config.wait < 0)) {
-        errors.push(exceptions.ValidationError('"wait" value must be an integer greater than or equal to 0',
-            { source: config }));
-    }
-}
-
-function addRepeatErrors (config, errors) {
-    if (!ofType(config.repeat, 'number', 'string') || config.repeat <= 0) {
-        errors.push(exceptions.ValidationError('"repeat" value must be an integer greater than 0',
-            { source: config }));
-    }
-}
-
-// Some of the following validation functions are shared between the copy and lookup behaviors
-
-function addFromErrors (config, behaviorName, fieldPrefix, errors) {
-    var fieldName = fieldPrefix.length > 0 ? fieldPrefix + '.from' : 'from';
-
-    if (!defined(config.from)) {
-        return;
-    }
-    if (!ofType(config.from, 'string', 'object')) {
-        errors.push(exceptions.ValidationError(
-            behaviorName + ' behavior "' + fieldName + '" field must be a string or an object, representing the request field to select from',
-            { source: config }));
-    }
-    else if (typeof config.from === 'object' && !hasExactlyOneKey(config.from)) {
-        errors.push(exceptions.ValidationError(behaviorName + ' behavior "' + fieldName + '" field must have exactly one key per object',
-            { source: config }));
-    }
-}
-
-function addIntoErrors (config, behaviorName, errors) {
-    if (!defined(config.into)) {
-        return;
-    }
-    if (!ofType(config.into, 'string')) {
-        errors.push(exceptions.ValidationError(
-            behaviorName + ' behavior "into" field must be a string, representing the token to replace in response fields',
-            { source: config }
-        ));
-    }
-}
-
-function addUsingErrors (config, behaviorName, fieldPrefix, errors) {
-    var fieldName = fieldPrefix.length > 0 ? fieldPrefix + '.using' : 'using';
-
-    if (!defined(config.using)) {
-        return;
-    }
-    if (!ofType(config.using, 'object')) {
-        errors.push(exceptions.ValidationError(
-            behaviorName + ' behavior "' + fieldName + '" field must be an object',
-            { source: config }));
-    }
-    else {
-        missingRequiredFields(config.using, 'method', 'selector').forEach(function (field) {
-            errors.push(exceptions.ValidationError(
-                behaviorName + ' behavior "' + fieldName + '.' + field + '" field required',
-                { source: config }));
-        });
-        if (defined(config.using.method) && ['regex', 'xpath', 'jsonpath'].indexOf(config.using.method) < 0) {
-            errors.push(exceptions.ValidationError(
-                behaviorName + ' behavior "' + fieldName + '.method" field must be one of [regex, xpath, jsonpath]',
-                { source: config }));
+    },
+    validations = {
+        wait: {
+            wait: {
+                _required: true,
+                _allowedTypes: { string: {}, number: { nonNegativeInteger: true } }
+            }
+        },
+        repeat: {
+            repeat: {
+                _required: true,
+                _allowedTypes: { number: { positiveInteger: true } }
+            }
+        },
+        copy: {
+            copy: [{
+                from: fromSchema,
+                into: intoSchema,
+                using: usingSchema
+            }]
+        },
+        lookup: {
+            lookup: [{
+                key: {
+                    _required: true,
+                    _allowedTypes: { object: {} },
+                    from: fromSchema,
+                    using: usingSchema
+                },
+                fromDataSource: {
+                    _required: true,
+                    _allowedTypes: { object: { singleKeyOnly: true, enum: ['csv'] } },
+                    csv: {
+                        _required: false,
+                        _allowedTypes: { object: {} },
+                        path: {
+                            _required: true,
+                            _allowedTypes: { string: {} },
+                            _additionalContext: 'the path to the CSV file'
+                        },
+                        keyColumn: {
+                            _required: true,
+                            _allowedTypes: { string: {} },
+                            _additionalContext: 'the column header to select against the "key" field'
+                        }
+                    }
+                },
+                into: intoSchema
+            }]
+        },
+        shellTransform: {
+            shellTransform: {
+                _required: true,
+                _allowedTypes: { string: {} },
+                _additionalContext: 'the path to a command line application'
+            }
+        },
+        decorate: {
+            decorate: {
+                _required: true,
+                _allowedTypes: { string: {} },
+                _additionalContext: 'a JavaScript function'
+            }
         }
-    }
-}
-
-function addCopyErrors (config, errors) {
-    if (!util.isArray(config.copy)) {
-        errors.push(exceptions.ValidationError('"copy" behavior must be an array',
-            { source: config }));
-    }
-    else {
-        config.copy.forEach(function (copyConfig) {
-            missingRequiredFields(copyConfig, 'from', 'into', 'using').forEach(function (field) {
-                errors.push(exceptions.ValidationError('copy behavior "' + field + '" field required',
-                    { source: copyConfig }));
-            });
-            addFromErrors(copyConfig, 'copy', '', errors);
-            addIntoErrors(copyConfig, 'copy', errors);
-            addUsingErrors(copyConfig, 'copy', '', errors);
-        });
-    }
-}
-
-function addLookupFromDataSourceCSVPathErrors (config, errors) {
-    if (!defined(config.fromDataSource.csv.path)) {
-        return;
-    }
-    if (!ofType(config.fromDataSource.csv.path, 'string')) {
-        errors.push(exceptions.ValidationError('lookup behavior "fromDataSource.csv.path" field must be a string, representing the path to the CSV file',
-            { source: config }));
-    }
-}
-
-function addLookupFromDataSourceCSVKeyColumnErrors (config, errors) {
-    if (!defined(config.fromDataSource.csv.keyColumn)) {
-        return;
-    }
-    if (!ofType(config.fromDataSource.csv.keyColumn, 'string')) {
-        errors.push(exceptions.ValidationError('lookup behavior "fromDataSource.csv.keyColumn" field must be a string, representing the column header to select against the "key" field',
-            { source: config }));
-    }
-}
-
-function addLookupKeyErrors (config, errors) {
-    if (!defined(config.key)) {
-        return;
-    }
-    if (!ofType(config.key, 'Object')) {
-        missingRequiredFields(config.key, 'from', 'using').forEach(function (field) {
-            errors.push(exceptions.ValidationError('lookup behavior "key.' + field + '" field required',
-                { source: config.key }));
-        });
-    }
-    addUsingErrors(config.key, 'lookup', 'key', errors);
-    addFromErrors(config.key, 'lookup', 'key', errors);
-}
-
-function addLookupFromDataSourceCSVErrors (config, errors) {
-    if (!ofType(config.fromDataSource.csv, 'object')) {
-        errors.push(exceptions.ValidationError('lookup behavior "fromDataSource.csv" field must be an object',
-            { source: config }));
-        return;
-    }
-
-    missingRequiredFields(config.fromDataSource.csv, 'path', 'keyColumn').forEach(function (field) {
-        errors.push(exceptions.ValidationError('lookup behavior "fromDataSource.csv.' + field + '" field required',
-            { source: config }));
-    });
-    addLookupFromDataSourceCSVPathErrors(config, errors);
-    addLookupFromDataSourceCSVKeyColumnErrors(config, errors);
-}
-
-function addLookupFromDataSourceErrors (config, errors) {
-    if (!defined(config.fromDataSource)) {
-        return;
-    }
-    if (!ofType(config.fromDataSource, 'object')) {
-        errors.push(exceptions.ValidationError(
-            'lookup behavior "fromDataSource" field must be an object',
-            { source: config }));
-        return;
-    }
-
-    if (!hasExactlyOneKey(config.fromDataSource)) {
-        errors.push(exceptions.ValidationError(
-            'lookup behavior "fromDataSource" field must have exactly one key',
-            { source: config }));
-    }
-    if (!defined(config.fromDataSource.csv)) {
-        errors.push(exceptions.ValidationError(
-            'lookup behavior "fromDataSource" key must be one of [csv] (other data sources may be supported in the future)',
-            { source: config }));
-    }
-    else {
-        addLookupFromDataSourceCSVErrors(config, errors);
-    }
-}
-
-function addLookupErrors (config, errors) {
-    if (!util.isArray(config.lookup)) {
-        errors.push(exceptions.ValidationError('"lookup" behavior must be an array',
-            { source: config }));
-    }
-    else {
-        config.lookup.forEach(function (lookupConfig) {
-            missingRequiredFields(lookupConfig, 'key', 'fromDataSource', 'into').forEach(function (field) {
-                errors.push(exceptions.ValidationError('lookup behavior "' + field + '" field required',
-                    { source: lookupConfig }));
-            });
-            addLookupKeyErrors(lookupConfig, errors);
-            addLookupFromDataSourceErrors(lookupConfig, errors);
-            addIntoErrors(lookupConfig, 'lookup', errors);
-        });
-    }
-}
-
-function addArrayhandlingkeyerrors (config, errors) {
-    if (!defined(config.key)) {
-        return;
-    }
-    if (!ofType(config.key, 'Object')) {
-        missingRequiredFields(config.key, 'from', 'using').forEach(function (field) {
-            errors.push(exceptions.ValidationError('arrayHandling behavior "key.' + field + '" field required',
-                { source: config.key }));
-        });
-    }
-    addArrayUsingkeyErrors(config.key, errors);
-}
-
-
-function addArrayUsingkeyErrors (config, errors) {
-    console.log('config.using  ' + JSON.stringify(config.using));
-    if (!defined(config.using)) {
-        return;
-    }
-    missingRequiredFields(config.using, 'method', 'selector').forEach(function (field) {
-        errors.push(exceptions.ValidationError('arrayHandling behavior "using.' + field + '" field required',
-            { source: config }));
-    });
-    addArrayusingErrors(config, errors);
-}
-
-
-function addArrayusingErrors (config, errors) {
-    if ((!defined(config.using.method)) || (!defined(config.using.selector))) {
-        return;
-    }
-    if (!ofType(config.using, 'object')) {
-        errors.push(exceptions.ValidationError('using should be an object',
-            { source: config.using }));
-    }
-    if (!ofType(config.using.method, 'string')) {
-        errors.push(exceptions.ValidationError('method should be an string',
-            { source: config.using.method }));
-    }
-    if (!util.isArray(config.using.selector)) {
-        errors.push(exceptions.ValidationError('"selector" behavior must be an array',
-            { source: config }));
-    }
-}
-
-function addArrayHandlingarraycopyreqarrayErrors (config, errors) {
-    if (!defined(config.arrayCopy.reqArray)) {
-        return;
-    }
-    if (!ofType(config.arrayCopy.reqArray, 'string')) {
-        errors.push(exceptions.ValidationError('arrayHandling behavior "config.arrayCopy.reqArray" field must be a string, representing the array block tag line',
-            { source: config }));
-    }
-}
-
-function addArrayHandlingarraycopyresarrayErrors (config, errors) {
-    if (!defined(config.arrayCopy.resArray)) {
-        return;
-    }
-    if (!ofType(config.arrayCopy.resArray, 'string')) {
-        errors.push(exceptions.ValidationError('arrayHandling behavior "config.arrayCopy.resArray" field must be a string, representing the whole response array block',
-            { source: config }));
-    }
-}
-
-function addArrayHandlingarraycopyintoresarrayErrors (config, errors) {
-    if (!defined(config.arrayCopy.intoResarray)) {
-        return;
-    }
-    if (!util.isArray(config.arrayCopy.intoResarray)) {
-        errors.push(exceptions.ValidationError('"arrayCopy.intoResarray" behavior must be an array',
-            { source: config }));
-    }
-}
-
-function addArrayHandlingarraycopyErrors (config, errors) {
-    if (!ofType(config.arrayCopy, 'object')) {
-        errors.push(exceptions.ValidationError('arrayHandling behavior "arrayCopy" field must be an object',
-            { source: config }));
-        return;
-    }
-
-    missingRequiredFields(config.arrayCopy, 'reqArray', 'resArray', 'intoResarray').forEach(function (field) {
-        errors.push(exceptions.ValidationError('arrayHandling behavior "arrayCopy.' + field + '" field required',
-            { source: config }));
-    });
-    addArrayHandlingarraycopyreqarrayErrors(config, errors);
-    addArrayHandlingarraycopyresarrayErrors(config, errors);
-    addArrayHandlingarraycopyintoresarrayErrors(config, errors);
-}
-
-function addDataintoerrors (config, behaviorName, errors) {
-    if (!defined(config.dataInto)) {
-        return;
-    }
-    if (!ofType(config.dataInto, 'string')) {
-        errors.push(exceptions.ValidationError(
-            behaviorName + ' behavior "dataInto" field must be a string, representing the token to replace in response fields',
-            { source: config }
-        ));
-    }
-}
-
-function addArraycopyerrors (config, errors) {
-    if (!defined(config.arrayCopy)) {
-        return;
-    }
-    if (!ofType(config.arrayCopy, 'object')) {
-        errors.push(exceptions.ValidationError(
-            'arrayHandling behavior "arrayCopy" field must be an object',
-            { source: config }));
-        return;
-    }
-    else {
-        addArrayHandlingarraycopyErrors(config, errors);
-    }
-}
-
-function addArrayhandlingerrors (config, errors) {
-    if (!util.isArray(config.arrayHandling)) {
-        errors.push(exceptions.ValidationError('"arrayHandling" behavior must be an array',
-            { source: config }));
-    }
-    else {
-        config.arrayHandling.forEach(function (arrayConfig) {
-            missingRequiredFields(arrayConfig, 'key', 'arrayCopy', 'dataInto').forEach(function (field) {
-                errors.push(exceptions.ValidationError('arrayHandling behavior "' + field + '" field required',
-                    { source: arrayConfig }));
-            });
-            addArrayhandlingkeyerrors(arrayConfig, errors);
-            addArraycopyerrors(arrayConfig, errors);
-            addDataintoerrors(arrayConfig, 'arrayHandling', errors);
-        });
-    }
-}
-
-function addShellTransformErrors (config, errors) {
-    if (!ofType(config.shellTransform, 'string')) {
-        errors.push(exceptions.ValidationError('"shellTransform" value must be a string of the path to a command line application',
-            { source: config }));
-    }
-}
-
-function addDecorateErrors (config, errors) {
-    if (!ofType(config.decorate, 'string')) {
-        errors.push(exceptions.ValidationError('"decorate" value must be a string representing a JavaScript function',
-            { source: config }));
-    }
-}
+    };
 
 /**
  * Validates the behavior configuration and returns all errors
@@ -389,23 +102,8 @@ function addDecorateErrors (config, errors) {
  * @returns {Object} The array of errors
  */
 function validate (config) {
-    var errors = [],
-        validations = {
-            wait: addWaitErrors,
-            repeat: addRepeatErrors,
-            copy: addCopyErrors,
-            lookup: addLookupErrors,
-            arrayHandling: addArrayhandlingerrors,
-            shellTransform: addShellTransformErrors,
-            decorate: addDecorateErrors
-        };
-    Object.keys(config || {}).forEach(function (key) {
-        if (validations[key]) {
-            validations[key](config, errors);
-        }
-    });
-
-    return errors;
+    var validator = require('./behaviorsValidator').create();
+    return validator.validate(config, validations);
 }
 
 /**
@@ -422,8 +120,11 @@ function wait (request, responsePromise, millisecondsOrFn, logger) {
         return responsePromise;
     }
 
-    var fn = util.format('(%s)()', millisecondsOrFn),
-        milliseconds = parseInt(millisecondsOrFn);
+    var util = require('util'),
+        fn = util.format('(%s)()', millisecondsOrFn),
+        milliseconds = parseInt(millisecondsOrFn),
+        Q = require('q'),
+        exceptions = require('../util/errors');
 
     if (isNaN(milliseconds)) {
         try {
@@ -442,7 +143,9 @@ function wait (request, responsePromise, millisecondsOrFn, logger) {
 }
 
 function quoteForShell (obj) {
-    var json = JSON.stringify(obj);
+    var json = JSON.stringify(obj),
+        isWindows = require('os').platform().indexOf('win') === 0,
+        util = require('util');
 
     if (isWindows) {
         // Confused? Me too. All other approaches I tried were spectacular failures
@@ -469,7 +172,10 @@ function shellTransform (request, responsePromise, command, logger) {
     }
 
     return responsePromise.then(function (response) {
-        var deferred = Q.defer(),
+        var Q = require('q'),
+            deferred = Q.defer(),
+            util = require('util'),
+            exec = require('child_process').exec,
             fullCommand = util.format('%s %s %s', command, quoteForShell(request), quoteForShell(response));
 
         logger.debug('Shelling out to %s', command);
@@ -510,8 +216,11 @@ function decorate (originalRequest, responsePromise, fn, logger) {
     }
 
     return responsePromise.then(function (response) {
-        var request = helpers.clone(originalRequest),
-            injected = '(' + fn + ')(request, response, logger);';
+        var Q = require('q'),
+            helpers = require('../util/helpers'),
+            request = helpers.clone(originalRequest),
+            injected = '(' + fn + ')(request, response, logger);',
+            exceptions = require('../util/errors');
 
         try {
             // Support functions that mutate response in place and those
@@ -549,7 +258,8 @@ function getFrom (obj, from) {
         return getFrom(obj[keys[0]], from[keys[0]]);
     }
     else {
-        var result = obj[getKeyIgnoringCase(obj, from)];
+        var result = obj[getKeyIgnoringCase(obj, from)],
+            util = require('util');
 
         // Some request fields, like query parameters, can be multi-valued
         if (util.isArray(result)) {
@@ -592,6 +302,7 @@ function regexValue (from, config, logger) {
 
 function xpathValue (from, config, logger) {
     var selectionFn = function () {
+        var xpath = require('./xpath');
         return xpath.select(config.using.selector, config.using.ns, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
@@ -599,6 +310,7 @@ function xpathValue (from, config, logger) {
 
 function jsonpathValue (from, config, logger) {
     var selectionFn = function () {
+        var jsonpath = require('./jsonpath');
         return jsonpath.select(config.using.selector, from, logger);
     };
     return getMatches(selectionFn, config.using.selector, logger);
@@ -629,7 +341,8 @@ function replaceArrayValuesIn (response, token, values, logger) {
     var replacer = function (field) {
         values.forEach(function (replacement, index) {
             // replace ${TOKEN}[1] with indexed element
-            var indexedToken = util.format('%s[%s]', token, index);
+            var util = require('util'),
+                indexedToken = util.format('%s[%s]', token, index);
             field = globalStringReplace(field, indexedToken, replacement, logger);
         });
         if (values.length > 0) {
@@ -652,6 +365,8 @@ function replaceArrayValuesIn (response, token, values, logger) {
  */
 function copy (originalRequest, responsePromise, copyArray, logger) {
     return responsePromise.then(function (response) {
+        var Q = require('q');
+
         copyArray.forEach(function (copyConfig) {
             var from = getFrom(originalRequest, copyConfig.from),
                 using = copyConfig.using || {},
@@ -673,9 +388,12 @@ function createRowObject (headers, rowArray) {
 }
 
 function selectRowFromCSV (csvConfig, keyValue, logger) {
-    var headers,
+    var fs = require('fs'),
+        Q = require('q'),
+        helpers = require('../util/helpers'),
+        headers,
         inputStream = fs.createReadStream(csvConfig.path),
-        parser = csvParse({ delimiter: ',' }),
+        parser = require('csv-parse')({ delimiter: ',' }),
         pipe = inputStream.pipe(parser),
         deferred = Q.defer();
 
@@ -685,7 +403,7 @@ function selectRowFromCSV (csvConfig, keyValue, logger) {
     });
 
     pipe.on('data', function (rowArray) {
-        if (!defined(headers)) {
+        if (!helpers.defined(headers)) {
             headers = rowArray;
         }
         else {
@@ -704,7 +422,8 @@ function selectRowFromCSV (csvConfig, keyValue, logger) {
 }
 
 function lookupRow (lookupConfig, originalRequest, logger) {
-    var from = getFrom(originalRequest, lookupConfig.key.from),
+    var Q = require('q'),
+        from = getFrom(originalRequest, lookupConfig.key.from),
         fnMap = { regex: regexValue, xpath: xpathValue, jsonpath: jsonpathValue },
         keyValues = fnMap[lookupConfig.key.using.method](from, lookupConfig.key, logger),
         index = lookupConfig.key.index || 0;
@@ -720,6 +439,8 @@ function lookupRow (lookupConfig, originalRequest, logger) {
 function replaceObjectValuesIn (response, token, values, logger) {
     var replacer = function (field) {
         Object.keys(values).forEach(function (key) {
+            var util = require('util');
+
             // replace ${TOKEN}["key"] and ${TOKEN}['key'] and ${TOKEN}[key]
             ['"', "'", ''].forEach(function (quoteChar) {
                 var quoted = util.format('%s[%s%s%s]', token, quoteChar, key, quoteChar);
@@ -743,78 +464,16 @@ function replaceObjectValuesIn (response, token, values, logger) {
  */
 function lookup (originalRequest, responsePromise, lookupArray, logger) {
     return responsePromise.then(function (response) {
-        var lookupPromises = lookupArray.map(function (lookupConfig) {
-            return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
-                replaceObjectValuesIn(response, lookupConfig.into, row, logger);
+        var Q = require('q'),
+            lookupPromises = lookupArray.map(function (lookupConfig) {
+                return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
+                    replaceObjectValuesIn(response, lookupConfig.into, row, logger);
+                });
             });
-        });
         return Q.all(lookupPromises).then(function () { return Q(response); });
     }).catch(function (error) {
         logger.error(error);
     });
-}
-// Array Handling main functions xpathArrayvalues, arrayHandling, arrayCopy
-
-function xpathArrayvalues (from, copyConfig, logger) {
-    var xvalue = [];
-    (copyConfig.using.selector).forEach(function (selector) {
-        var selectionFn = function () {
-            var value = xpath.select(selector, copyConfig.using.ns, from, logger);
-            xvalue.push(value);
-        };
-        return getMatches(selectionFn, selector, logger);
-    });
-    return xvalue;
-}
-
-function arrayHandling (originalRequest, responsePromise, config, logger) {
-    return responsePromise.then(function (response) {
-        config.forEach(function (arrayConfig) {
-            var from = getFrom(originalRequest, arrayConfig.key.from),
-                // using = arrayConfig.key.using || {},
-                fnMap = {
-                    xpath: xpathArrayvalues
-                },
-                values = [];
-            if (fnMap[arrayConfig.key.using.method]) {
-                values = fnMap[arrayConfig.key.using.method](from, arrayConfig.key, logger);
-            }
-            var valuesinString = values.toString();
-            var splitValues = valuesinString.split(',');
-            // console.log("valuesinString  --- > "+JSON.stringify(valuesinString));
-            arrayCopy(originalRequest, arrayConfig, response, splitValues, logger);
-        });
-        return Q(response);
-    });
-}
-
-function arrayCopy (originalRequest, arrayConfig, response, values) {
-    var replaceResponse = '',
-        reqArray = arrayConfig.arrayCopy.reqArray,
-        resArray = arrayConfig.arrayCopy.resArray,
-        intoResarray = arrayConfig.arrayCopy.intoResarray,
-        dataInto = arrayConfig.dataInto,
-        countReqArray = (originalRequest.body.match(new RegExp(reqArray, 'g')) || []).length,
-        i, j, k, t, counter = 0,
-        concatResArray = '';
-
-    for (k = 0; k < countReqArray; k += 1) {
-        concatResArray = concatResArray + '\n\r' + resArray;
-    }
-
-    for (i = 0; i < countReqArray; i += 1) {
-        for (t = 0; t < intoResarray.length; t += 1) {
-            for (j = counter; j < values.length; j += 1) {
-                var regexstring = intoResarray[t];
-                if (concatResArray.search(new RegExp(regexstring + '\\b', '')) !== -1) {
-                    concatResArray = concatResArray.replace((new RegExp(regexstring + '\\b')), values[j]);
-                    counter += 1;
-                }
-            }
-        }
-    }
-    replaceResponse = response.body.replace(dataInto, concatResArray);
-    response.body = replaceResponse;
 }
 
 /**
@@ -827,10 +486,12 @@ function arrayCopy (originalRequest, arrayConfig, response, values) {
  */
 function execute (request, response, behaviors, logger) {
     if (!behaviors) {
-        return Q(response);
+        return require('q')(response);
     }
 
-    var waitFn = behaviors.wait ?
+    var Q = require('q'),
+        combinators = require('../util/combinators'),
+        waitFn = behaviors.wait ?
             function (result) { return wait(request, result, behaviors.wait, logger); } :
             combinators.identity,
         copyFn = behaviors.copy ?
@@ -842,16 +503,13 @@ function execute (request, response, behaviors, logger) {
         shellTransformFn = behaviors.shellTransform ?
             function (result) { return shellTransform(request, result, behaviors.shellTransform, logger); } :
             combinators.identity,
-        arrayHandlingFn = behaviors.arrayHandling ?
-            function (result) { return arrayHandling(request, result, behaviors.arrayHandling, logger); } :
-            combinators.identity,
         decorateFn = behaviors.decorate ?
             function (result) { return decorate(request, result, behaviors.decorate, logger); } :
             combinators.identity;
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));
 
-    return combinators.compose(decorateFn, arrayHandlingFn, shellTransformFn, copyFn, lookupFn, waitFn, Q)(response);
+    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, waitFn, Q)(response);
 }
 
 module.exports = {

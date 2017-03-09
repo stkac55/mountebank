@@ -1,14 +1,14 @@
-Contributing to mountebank
-==========================
+# Contributing to mountebank
 
-Congratulations!  You're here because you want to join the millions of open source developers
-contributing to mountebank.  The good news is contributing is an easy process.  In fact, you can
+Congratulations! You're here because you want to join the millions of open source developers
+contributing to mountebank. The good news is contributing is an easy process. In fact, you can
 make a difference without writing a single line of code. I am grateful for all of the following contributions:
 
 * Submitting an issue, either through github or the [support page](http://www.mbtest.org/support)
-* Making a suggestion
-* Letting me know that you're using mountebank and how you're using it.  It's surprisingly hard to find
-that out with open source projects, and provides healthy motivation.  Feel free to email at
+* Comment on existing issues
+* Answer questions in the [support forum](https://groups.google.com/forum/#!forum/mountebank-discuss)
+* Letting me know that you're using mountebank and how you're using it. It's surprisingly hard to find
+that out with open source projects, and provides healthy motivation. Feel free to email at
 brandon.byars@gmail.com
 * Writing about mountebank (bonus points if you link to the [home page](http://www.mbtest.org/))
 * Creating a how-to video about mountebank
@@ -20,87 +20,96 @@ on a web page (I will never announce a company's usage of mountebank without the
 * Writing a client library that hides the REST API under a language-specific API
 * Writing a build plugin for (maven, gradle, MSBuild, rake, gulp, etc)
 
-Still want to write some code?  Great!  You may want to keep the [source documentation](https://mountebank.firebaseapp.com/)
-handy, and you may want to review [the issues](https://github.com/bbyars/mountebank/labels/up-for-grabs) that I suspect
-are relatively easy to get up and going.  From there, you can choose the basic workflow or the advanced workflow
-depending on your time commitment and level of interest.
+Still want to write some code?  Great! You may want to keep the
+[source documentation](https://mountebank.firebaseapp.com/)
+handy, and you may want to review [the issues](https://github.com/bbyars/mountebank/issues).
 
-## The Basic Workflow
+I have two high level goals for community contributions. First, I'd like contributing to be as fun
+as possible. Secondly, I'd like contributions to follow the design vision of mountebank.
+Unfortunately, those two goals can conflict, especially when you're just getting started and
+don't understand the design vision or coding standards. I hope this document helps, and feel free
+to make a pull request to improve it! If you have any questions, I am more than happy to help
+at brandon.byars@gmail.com, and I am open to any all suggestions on how to make code contributions
+as rewarding an experience as possible.
 
-* [Fork the repo](https://github.com/bbyars/mountebank#fork-destination-box) (you might as well star it while you're at it).
-* Change some code.  Or add new code.  Or maybe delete some.
-* Create a pull request
+## Designing mountebank
 
-That's it!  Seriously.  I have an extraordinarily lenient policy for accepting pull requests, and once your pull
-request is accepted, I'll mention you in the release notes and add you to the contributors section of the package.json
-to memorialize your contribution for all eternity (feel free to add yourself in the pull request if you want).
+The code in mountebank is now a few years old, and maintaining consistency of design vision
+is key to keeping it maintainable. The following describe key concepts:
 
-If it breaks tests, and you're struggling to figure out why, create the pull request anyway.  I'll fix it.
+### API changes
 
-If it violates some coding standards that you're unaware of, create the pull request anyway.  I'll fix it.
+I consider the REST API the public API from a semantic versioning standpoint, and I aspire never
+to have to release a v2 of mountebank. In my opinion, *the API is more important than the code
+behind it*; we can fix the code, but we can't change the API once it's been documented. Therefore,
+expect more scrutiny for API changes, and don't be offended if I recommend some changes. I often
+agonize over the names in the API, and use tests to help me play with ideas.
 
-The only time I'll reject pull requests is when the code does something contrary to the design of mountebank, and
-given that it would be very onerous for you to understand the entire design of the codebase, I'd much rather you
-just assume your code is good and create the pull request.  I'll let you know if it doesn't work for some reason.
+Before API changes can be released, the documentation and
+[contract page](http://www.mbtest.org/docs/api/contracts) need to be updated. The contract page
+is, I hope, friendly for users, but a bit unfriendly for maintainers. I'd love help fixing that.
 
-## The Advanced Workflow
+### Protocol Agnosticism
 
-* Run the build script before committing.  `./build` (Linux/Mac) or `build` (Windows) should do
-the trick.  Unfortunately, there seem to be one or two tests that reliably fail on some people's machines
-for reasons that I haven't figured out yet.  If you run a clean build and see a test failing, please let me
-know on [the relevant issue](https://github.com/bbyars/mountebank/issues/101).
-* Review basic coding standards described below.
-* Reference the [relevant issue](https://github.com/bbyars/mountebank/issues) in your git commit message,
-if appropriate
-
-The first time you run the build, it will do an `npm install`.  If you run an `npm install -g grunt-cli` as well,
-you can skip the full build on subsequent runs by just running `grunt`.
-
-## Tests failing?
-
-There are some tests that require network access (`grunt airplane` ignores them in case that offends your
-moral sensibilities).  A few of these tests verify the correct behavior under DNS failures.  If your ISP
-is kind enough to hijack the NXDOMAIN DNS response in an attempt to allow you to conveniently peruse their
-advertising page, those tests will fail.  I suggest that, under such circumstances, you talk to your ISP
-and let them know that their policies are causing mountebank tests to fail. You can also run `grunt airplane`,
-which will avoid tests requiring your DNS resolver.
-
-I am still fighting the occasional flaky test elsewhere as well.  If you find one, please
-[report it](https://github.com/bbyars/mountebank/issues/101).
-
-## Debugging
-
-I was somewhat of a JavaScript newbie when I started mountebank, and even now, I don't actually code for a living
-so I find it hard to keep my skills up-to-date. If you're a pro, feel free to skip
-this section, but if you're like me, you may find the tips below helpful:
-
-* mocha decorates test functions with an `only` function, that allows you to isolate test runs
-  to a single context or a single function.  This works on both `describe` blocks and on `it` functions.
-  You'll notice that I use a `promiseIt` function for my asynchronous tests, which just wraps the `it`
-  function with promise resolution and error handling.  `promiseIt` also accepts an `only` function, so you
-  can do `promiseIt.only('test description', function () {/*...*/});`
-* Debugging asynchronous code is hard.  I'm not too proud to use `console.log`, and neither should you be.
-* The functional tests require a running instance of `mb`.  If you're struggling with a particular test,
-  and you've isolated it using the `only` function, you may want to run `mb` with the `--loglevel debug`
-  switch.  The additional logging exposes a number of API and socket events.
-
-## Getting Help
-
-The source documentation is always available at [Firebase](https://mountebank.firebaseapp.com/).
-
-I'm also available via Skype or something similar for questions.  Feel free to reach me at brandon.byars@gmail.com
-
-## Coding Guidelines
-
-### Maintaining Design Vision
-
-Most of mountebank is protocol-agnostic, and I consider this a key design concern. In general, every file
+Most of mountebank is protocol-agnostic, and I consider central to its design. In general, every file
 outside fo the protocol folders (http, tcp, etc) should _not_ reference any of the request or response fields
 (like http bodies). Instead, they should accept generic object structures and deal with them appropriately.
-This includes much of the core logic in mountebank, including predicates, behaviors, and response resolution.
+This includes all of the core logic in mountebank, including predicates, behaviors, and response resolution.
 To help myself maintain that mentality, I often write unit tests that use a different request or response
-structure than any of the existing protocols. This approach both makes it easier to add protocols in the future
+structure than any of the existing protocols. This approach makes it easier to add protocols in the future
 and ensures that the logic will work for existing protocols.
+
+I aim in a [future version](https://github.com/bbyars/mountebank/issues/174) to completely separate
+the protocol implementations as separate plugins, making protocol extension as easy as pie.
+
+### Aim for the broadest reach
+
+Many development decisions implicitly frame a tradeoff between the developers of mountebank and the users.  Whenever I
+recognize such a tradeoff, I always favor the users.  Here are a few examples, maybe you can think of more, or inform
+me of ways to overcome these tradeoffs in a mutually agreeable manner:
+
+* I stick to ES5 instead of ES6 to maintain compatibility with older versions of node
+* The build and CI infrastructure is quite complex and slow, but I'd prefer that over releasing flaky software
+* I aim for fairly comprehensive error handling with useful error messages to help users out
+* Windows support can be painful at times, but it is a core platform for mountebank
+
+## Coding mountebank
+
+I do everything I can to resist code entropy, following the ["no broken windows](https://pragprog.com/the-pragmatic-programmer/extracts/software-entropy)
+advice given by the Pragmatic Programmers. Like any old codebase
+mountebank has its share of warts. The following help to keep the code as clean as possible:
+
+### Pull Requests
+
+While all pull requests are welcome, the following make them easier to consume quickly:
+
+* Smaller is better. If you have multiple changes to make, consider separate pull requests.
+* Provide as much information as possible. Consider providing an example of how to use your change
+in the pull request comments
+* Provide tests for your change. See below for the different types of testing in mountebank
+* Provide documentation for your change.
+
+### Developer Workflow
+
+The following steps will set up your development environment:
+
+* `npm install`
+* `npm install -g grunt-cli`
+* `grunt airplane`
+
+Note that running `./build` (Linux/Mac) or `build` (Windows) will run everything for you even without
+an `npm install`, and is what CI uses. The `grunt airplane` command is what I use before committing.
+You can also run `grunt`, which more accurately models what happens in CI, but there are some tests
+that may pass or fail depending on your ISP. These tests that require network connectivity and verify
+the correct behavior under DNS failures. If your ISP is kind enough to hijack the NXDOMAIN DNS response
+in an attempt to allow you to conveniently peruse their advertising page, those tests will fail.
+
+When you're ready to commit, do the following
+
+* Look at your diffs! Many times accidental whitespace changes get included, adding noise
+to what needs reviewing.
+* Use a descriptive message explaining "why" instead of "what" if possible
+* Include a link to the github issue in the commit message if appropriate
 
 ### JavaScript OO
 
@@ -114,66 +123,155 @@ Instead prefer modules that return object literals.  If you need a creation func
 too proud about.  Although I'm of mixed opinion on this, I've tended to capitalize objects with a `create`
 method to emulate the style for standard JavaScript constructors.
 
-If this style is new to you, you might want to check out a
-[short presentation](http://usergroup.tv/videos/keeping-up-with-javascript) that
-[Pete Hodgson](https://github.com/moredip) and I did demonstrating this style
-(thanks to Pete for allowing the use of his deck and material).
+I have not used ES6 because it's not fully available on node 4, which is the lowest version of node
+supported by mountebank.
 
-### Dependency Injection
+### Requiring Packages
 
-Early commits in mountebank's life included [mockery](https://github.com/mfncooper/mockery) to mock out
-dependencies.  Despite the excellence of the library, I found the resultant code both harder to understand
-and less testable.  Prefer passing dependencies into creation methods instead.
+In the early days, the `mb` process started up quite quickly. Years later, that was no longer true,
+but it was like boiling a frog, the small increase that came from various changes were imperceptible
+at the time. The root cause was adding package dependencies - I had a pattern of making the `require`
+calls at the top of each module. Since that was true for internal modules as well, the entire app,
+including all dependencies, was loaded and parsed at startup, and each new dependency increased the
+startup time.
 
-### Asynchronous Code
+The pattern now is, where possible, to scope the `require` calls inside the function that needs them.
 
-Use promises.  mountebank ships with [q](https://github.com/kriskowal/q) in the codebase.  The inimitable
-[Pete Hodgson](http://blog.thepete.net) taught me how to
-[test asynchronous JavaScript](http://martinfowler.com/articles/asyncJS.html) using promises.
+### Linting
 
-### Backwards Compatibility
+In the spirit of being as lazy as possible towards maintaining code quality, I rely on linting heavily.
+You are welcome to fix any tech debt that you see in SaaS dashboards:
 
-I've aimed to keep the mountebank REST API intentionally versionless (see an
-[essay](http://martinfowler.com/articles/enterpriseREST.html#versioning) or
-[presentation](http://www.infoq.com/presentations/constraints-api-rest-integration) for my views on API
-versioning). This isn't as radical as it may sound: the NPR API has been versionless since launch.
-I may make some suggestions to any API changes you make in an effort to make them more
-future-compatible.  You can help by thinking through any breaking changes you make and explaining the
-reasons in the commit messages.
+* [Code Climate](https://codeclimate.com/github/bbyars/mountebank)
+* [Codacy](https://www.codacy.com/app/brandonbyars/mountebank/dashboard)
+* [Bithound](https://www.bithound.io/github/bbyars/mountebank/master)
+* [Test Coverage](https://codeclimate.com/github/bbyars/mountebank/coverage)
 
-This applies mostly to the API, which is what I consider my public API for semantic versioning.  I try
-to minimize disruption with the command line arguments, but am more likely to accept breaking changes there.
-I only consider API breaking changes in the semantic versioning scheme for mountebank, and aspire to never
-need to release mountebank v2.
+There are several linting tools run locally as well:
 
-### Documentation Tests
+* eslint - I have a strict set of rules. Feel free to suggest changes if they interfere with your ability
+to get changes committed, but if not I'd prefer to keep the style consistent.
+* custom code that looks for unused packages and `only` calls left in the codebase
+* A custom `shonkwrapCheck` test, that makes some verifications of the `npm-shrinkwrap.json` file.
+Unfortunately, the standard `npm shrinkwrap` command doesn't work if you want to install mountebank
+behind a repository manager (see [this issue](https://github.com/bbyars/mountebank/issues/141)), which
+makes adding package dependencies to mountebank (or upgrading versions) clumsy. My general workflow
+is to update `package.json`, delete `npm-shrinkwrap.json`, run `npm install`, and then run `node_modules/.bin/shonkwrap`.
 
-The most comprehensive tests I have are embedded in the documentation.  Many of the request/response pairs
-in the docs are tagged with HTML attributes that allow the `docsIntegrityTest` to verify that the docs
-are in fact accurate.  I did this initially because I knew how lazy I am about documentation and thought this
-would force me keep the docs up-to-date.  In practice, those tests have been far more valuable than simply
-keeping my docs up-to-date.  They've been invaluable in catching high-level bugs.
+## Testing mountebank
 
-They're also a royal pain to change when they fail.  I comment out many of the pages liberally in the test file
-and use the `only` function to isolate when I'm dealing with broken tests there.  I also spit out the request and
-response on test failures.  When I intend to change something (add fields, etc), I make sure through visual
-inspection that the actual result is what I want, and can simply replace that block in the code.
+I almost never manually QA anything before releasing, so automated testing is essential to
+maintaining a quality product. There are four levels of testing in mountebank:
 
-### Aim for the broadest reach
+### Unit tests
 
-Many development decisions implicitly frame a tradeoff between the developers of mountebank and the users.  Whenever I
-recognize such a tradeoff, I always favor the users.  Here are a few examples, maybe you can think of more, or inform
-me of ways to overcome these tradeoffs in a mutually agreeable manner:
+These live in the `test` directory, with a directory structure that mostly mimics the production
+code being tested (except in scenarios where I've used multiple test files for one production file,
+as is the case for `predicates` and `behaviors`).  My general rule for unit tests is that they run
+in-process. I have no moral objection to unit tests writing to the file system, but I aim to keep
+each test small in scope. Your best bet is probably copying an existing test and modifying it.
+Nearly all (maybe all) unit tests are protocol-agnostic, and I often use fake protocol requests
+during the setup part of each test.
 
-* I stick to ES5 instead of ES6 to maintain compatibility with older versions of node
-* I've kept mountebank monolithic rather than add protocols through plugins to make it easier to get started
-* The build and CI infrastructure is quite complex and a little slow, but I'd prefer that over releasing flaky software
-* I aim for fairly comprehensive error handling with useful error messages to help users out
-* Windows support can be painful at times, but it is a core platform for mountebank
+### Functional tests
+
+These live in the `functionalTest` directory, and are out-of-process tests that verify three types
+of behavior:
+
+* Protocol-specific API behavior, in the `functionalTest/api` directory. Each of these tests expects
+`mb` to be running (sometimes with the `--mock --debug --allowInjection` flags) and calls its API.
+* Command line behavior, in the `functionalTest/commandLine` directory. Each of these tests spins
+up a new instance of `mb` and verifies certain behaviors
+* Website integrity, in the `functionalTest/html` directory. These expect `mb` to be running and
+validate that there are no broken links, that each page is proper HTML, that the feed works, that
+the site map is valid, and that the documentation examples are valid. That last point is unique
+enough that I consider it to be an entirely different type of test, described next.
+
+### Documentation tests
+
+The `functionalTest/html/docsIntegrityTest.js` file crawls the website and looks for HTML code
+blocks with certain attributes. It then executes those code examples and validates that the
+documented results are correct. At first I wrote these tests as a check on my own laziness;
+I know from experience how hard it is to keep the docs up-to-date. They proved quite useful,
+however, as a kind of BDD style outside-in description of the behavior. They're also painful
+to create and maintain.
+
+You start by writing the docs, with the examples, in the appropriate file in `src/views/docs`.
+The examples are wrapped in `pre` and `code` HTML blocks, and the `code` block uses special
+HTML attributes:
+
+* `data-test-id` defines the test scenario. All steps in a scenario are run sequentially.
+* `data-test-step` defines the sequence within a scenario. For example, step 1 is run
+before step 2
+* `data-test-type` defines how the example is executed. There are four types supported:
+  * `http` is the most common one, representing HTTP requests and responses.
+  * `exec` is used for command line executions, like on the [getting started](http://www.mbtest.org/docs/gettingStarted)
+  page
+  * `smtp` is used for SMTP examples, as on the [mock verification](http://www.mbtest.org/docs/api/mocks) page
+  * `file` is used to create and delete a file, as on the lookup examples on the
+  [behavior](http://www.mbtest.org/docs/api/behaviors) page. The filename is provided with the
+  `data-test-filename` attribute. To delete the file, leave the `code` block empty.
+* `data-test-verify-step` references the `data-test-step` and validates that the response
+(HTTP or command line) is as expected. The response generated by the referenced step must
+be textually equivalent to what's in this `code` block
+* `data-test-ignore-lines` provides an array of regular expressions. Every line matching
+that pattern is ignored in the verification. For HTTP responses, for example, every
+verification uses `data-test-ignore-lines='["^Date"]'` at a minimum to ignore the `Date`
+header, which will never match since it changes with every run.
+
+I will often comment out all files except the one I'm troubleshooting in
+`functionalTest/html/docsIntegrityTest.js`.
+
+### Performance tests
+
+I only have a few of these, to ensure a flat memory usage under normal circumstances and
+to ensure that the application startup time doesn't increase over time (as was happening
+as more package dependencies were added). Performance testing is a key use case of
+mountebank, so if you have experience writing performance tests and want to add some to
+mountebank, I'd be eternally grateful. These are run in a special CI job and not as
+part of the pre-commit script.
+
+### Debugging
+
+I was somewhat of a JavaScript newbie when I started mountebank, and even now, I don't actually
+code for a living so I find it hard to keep my skills up-to-date. If you're a pro, feel free to skip
+this section, but if you're like me, you may find the tips below helpful:
+
+* mocha decorates test functions with an `only` function, that allows you to isolate test runs
+  to a single context or a single function.  This works on both `describe` blocks and on `it` functions.
+  You'll notice that I use a `promiseIt` function for my asynchronous tests, which just wraps the `it`
+  function with promise resolution and error handling.  `promiseIt` also accepts an `only` function, so you
+  can do `promiseIt.only('test description', function () {/*...*/});`
+* Debugging asynchronous code is hard.  I'm not too proud to use `console.log`, and neither should you be.
+* The functional tests require a running instance of `mb`.  If you're struggling with a particular test,
+  and you've isolated it using the `only` function, you may want to run `mb` with the `--loglevel debug`
+  switch.  The additional logging exposes a number of API and socket events.
+
+A combination of `only` calls on tests with `console.log`s alongside a running instance of `mb`
+is how I debug every test where it isn't immediately obvious why it's broken.
+
+### Configuring Your IDE
+
+I use IntelliJ to develop. I've found it convenient to set up the ability to run tests through the IDE,
+and use several configurations to run different types of tests:
+
+![Test configurations](https://raw.githubusercontent.com/bbyars/mountebank/master/images/Intellij-Configurations.png)
+
+The screenshot below shows how I've set up the ability to run unit and functional tests as part of
+what I've called the `all` configuration:
+
+![Configuration details](https://raw.githubusercontent.com/bbyars/mountebank/master/images/Intellij-Configuration-Details.png)
+
+That configuration assumes mountebank is running in a separate process. I also have a configuration that removes the
+functional tests from the 'Application Parameters' line, which runs the unit tests without any expectation of
+mountebank running. Combined with the `only` function described in the Debugging section above, I'm able to
+do a significant amount of troubleshooting without leaving the IDE.
+
+I use [nvm](https://github.com/creationix/nvm) to install different versions of node to test against.
 
 ### The Continuous Integration Pipeline
 
-Looking at the [README](https://github.com/bbyars/mountebank#build-status) will show that I have a complex CI pipleline.
+Looking at the [README](https://github.com/bbyars/mountebank#build-status) will show that I have a complex CI pipeline.
 Currently it involves Travis CI, Appveyor, and Snap CI, although I may add or remove from that list as I continue to
 try and improve the pipeline.  At the moment, a commit will trigger a Travis CI build, which in turn triggers the other
 CI systems through API calls, ensuring a consistent version throughout.  I've had bugs in different operating systems,
@@ -182,3 +280,26 @@ as I reasonably can.
 
 Every successful build that isn't a pull request deploys to a [test site](http://mountebank-dev.herokuapp.com/) that will
 have a link to the artifacts for that prerelease version.
+
+## Releasing mountebank
+
+Very few of you will have to worry about this, but in case you're curious, here's the process. Travis.ci does most
+of the heavy lifting.
+
+* Make sure the previous builds pass across all operating systems, install types, and node versions
+* Review major / minor version.
+* Update the releases.json with the latest release
+* Add `views/releases/vx.x.x` with the release notes. Make sure to use absolute URLs so they work in aggregators, etc
+* Make sure all contributors have been added to `package.json`
+* commit
+* push
+* wait for the build to pass
+* `git tag -a vXX.YY.ZZ -m 'vXX.YY.ZZ release'`
+* `git push --tags`
+* update version in package.json to avoid accidental version overwrite for next version
+
+## Getting Help
+
+The source documentation is always available at [Firebase](https://mountebank.firebaseapp.com/).
+
+I'm also available via Skype or something similar for questions.  Feel free to reach me at brandon.byars@gmail.com

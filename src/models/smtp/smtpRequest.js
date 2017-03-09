@@ -5,40 +5,17 @@
  * @module
  */
 
-var Q = require('q'),
-    util = require('util'),
-    parse = require('mailparser').simpleParser;
-
-function forceArray (obj) {
-    if (!util.isArray(obj)) {
-        return [obj];
-    }
-    else {
-        return obj;
-    }
-}
-
-function convertToNameAndAddress (field) {
-    if (util.isArray(field)) {
-        return field.map(convertToNameAndAddress);
-    }
-    else {
-        return field.value[0];
-    }
-}
-
 function transform (request, email) {
-    /* eslint complexity: [2, 8] */
     return {
         requestFrom: request.remoteAddress,
         envelopeFrom: request.from,
         envelopeTo: request.to,
-        from: email.from.value[0],
-        to: forceArray(convertToNameAndAddress(email.to)),
-        cc: forceArray(convertToNameAndAddress(email.cc || [])),
-        bcc: forceArray(convertToNameAndAddress(email.bcc || [])),
+        from: email.from[0],
+        to: email.to,
+        cc: email.cc || [],
+        bcc: email.bcc || [],
         subject: email.subject,
-        priority: email.priority || 'normal',
+        priority: email.priority,
         references: email.references || [],
         inReplyTo: email.inReplyTo || [],
         text: email.text,
@@ -53,18 +30,14 @@ function transform (request, email) {
  * @returns {Object}
  */
 function createFrom (request) {
-    var deferred = Q.defer(),
-        text = '';
+    var Q = require('q'),
+        Parser = require('mailparser').MailParser,
+        deferred = Q.defer(),
+        parser = new Parser();
 
-    request.on('data', function (chunk) { text += chunk; });
-    request.once('end', function () {
-        parse(text, function (error, mail) {
-            if (error) {
-                deferred.reject(error);
-            }
-            deferred.resolve(transform(request, mail));
-        });
-    });
+    request.on('data', function (chunk) { parser.write(chunk); });
+    request.once('end', function () { parser.end(); });
+    parser.once('end', function (email) { deferred.resolve(transform(request, email)); });
     return deferred.promise;
 }
 

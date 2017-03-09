@@ -1,5 +1,4 @@
-mountebank
-==========
+# mountebank
 
 mountebank is the first open source tool to provide cross-platform, multi-protocol test doubles over the wire.
 Just point your application to mountebank instead of the real dependency,
@@ -34,7 +33,7 @@ Run:
 
 ## Learn More
 
-After installing and running, view the docs in your browser at http://localhost:2525, or visit the
+After installing and running, view the docs in your browser at <http://localhost:2525>, or visit the
 [public site](http://www.mbtest.org/).
 
 ## Goals
@@ -42,12 +41,12 @@ After installing and running, view the docs in your browser at http://localhost:
 mountebank has the following goals:
 
 * Trivial to get started
-    * mountebank is easy to install, without any platform dependencies.  mountebank aims for fun and comprehensive
+  * mountebank is easy to install, without any platform dependencies.  mountebank aims for fun and comprehensive
      documentation with lots of examples, and a nice UI that lets you explore the API interactively.
 * A platform, not just a tool
-    * mountebank aims to be fully cross-platform, with native language bindings.  Servers are extensible through scripting.
+  * mountebank aims to be fully cross-platform, with native language bindings.  Servers are extensible through scripting.
 * Powerful
-    * mountebank is the only open source stubbing tool that is non-modal and multi-protocol.  Commercial
+  * mountebank is the only open source stubbing tool that is non-modal and multi-protocol.  Commercial
     "service virtualization" solutions exist, but their licensed platforms make it hard to move the tests
     closer to development and can even require a specialized IDE.  mountebank provides service virtualization free
     of charge without any platform constraints.
@@ -73,8 +72,11 @@ you can contact me directly at brandon.byars@gmail.com.
 
 ## Build Status
 
-[![Coverage Status][coveralls-badge]][coveralls]
+[![Test Coverage][codeclimate-coverage-badge]][codeclimate-coverage]
 [![Codacy Badge][codacy-badge]][codacy]
+[![Code Climate][codeclimate-badge]][codeclimate]
+[![Greenkeeper badge][greenkeeper-badge]][greenkeeper]
+[![bitHound Overall Score][bithound-badge]][bithound]
 
 |                       |Node Version |Ubuntu 12.04                            |CentOS 6.7                            |OS X Mavericks                           |Windows Server 2012                          |
 |-----------------------|:-----------:|:--------------------------------------:|:------------------------------------:|:---------------------------------------:|:-------------------------------------------:|
@@ -87,10 +89,18 @@ you can contact me directly at brandon.byars@gmail.com.
 
 [npm-badge]: https://nodei.co/npm/mountebank.png?downloads=true&downloadRank=true&stars=true
 [npm]: https://www.npmjs.com/package/mountebank
+[bithound-badge]: https://www.bithound.io/github/bbyars/mountebank/badges/score.svg
+[bithound]: https://www.bithound.io/github/bbyars/mountebank
+[codeclimate-badge]: https://codeclimate.com/github/bbyars/mountebank/badges/gpa.svg
+[codeclimate]: https://codeclimate.com/github/bbyars/mountebank
+[codeclimate-coverage-badge]: https://codeclimate.com/github/bbyars/mountebank/badges/coverage.svg
+[codeclimate-coverage]: https://codeclimate.com/github/bbyars/mountebank/coverage
 [coveralls-badge]: https://coveralls.io/repos/bbyars/mountebank/badge.png?branch=master
 [coveralls]: https://coveralls.io/r/bbyars/mountebank?branch=master
 [codacy-badge]: https://www.codacy.com/project/badge/c030a6aebe274e21b4ce11a74e01fa12
 [codacy]: https://www.codacy.com/public/brandonbyars/mountebank
+[greenkeeper-badge]: https://badges.greenkeeper.io/bbyars/mountebank.svg
+[greenkeeper]: https://greenkeeper.io/
 [travis-badge]: https://travis-ci.org/bbyars/mountebank.png
 [travis]: https://travis-ci.org/bbyars/mountebank
 [appveyor-badge]: https://ci.appveyor.com/api/projects/status/acfhg44px95s4pk5?svg=true
