@@ -48,6 +48,8 @@ function create (proxy, postProcess) {
         }
         return deferred.promise;
     }
+
+    // Function is taken from xpath.js to handle xml namespaces
     function nodeValue (node) {
         if (node.nodeType === node.TEXT_NODE) {
             return node.nodeValue;
@@ -76,8 +78,7 @@ function create (proxy, postProcess) {
             storePredicate.push(JSON.parse(JSON.stringify(storeObject)));
         });
         storePredicate.forEach(function (xpathObject, t) {
-            // xpathObject.xpath.selector = '(' + xpathObject.xpath.selector + ')' + '[' + (t + 1) + ']';
-            xpathObject.xpath.selector = (xpathObject.xpath.selector).replace('*', t);
+            xpathObject.xpath.selector = '(' + xpathObject.xpath.selector + ')' + '[' + (t + 1) + ']';
             predicate.xpath = xpathObject.xpath;
             finalPredicate.push(JSON.parse(JSON.stringify(xpathObject)));
         });
@@ -109,7 +110,7 @@ function create (proxy, postProcess) {
                 }
                 predicate = multipleXpathvalues(predicate, title);
                 for (var j = 1; j < title.length; j += 1) {
-                    predicates.push(predicate[j += 1]);
+                    predicates.push(predicate[j - 1]);
                 }
             }
             else {
