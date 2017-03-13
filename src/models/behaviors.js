@@ -5,10 +5,6 @@
  * @module
  */
 
-// Required files for arrayHandling functionality
-// var Q = require('q'), xpath = require('./xpath');
-
-
 // The following schemas are used by both the lookup and copy behaviors and should be kept consistent
 var fromSchema = {
         _required: true,
