@@ -510,6 +510,34 @@ function arrayHandling (originalRequest, responsePromise, config, logger) {
     });
 }
 
+function arrayCopy (originalRequest, arrayConfig, response, values) {
+    var replaceResponse = '',
+        reqArray = arrayConfig.arrayCopy.reqArray,
+        resArray = arrayConfig.arrayCopy.resArray,
+        intoResarray = arrayConfig.arrayCopy.intoResarray,
+        dataInto = arrayConfig.dataInto,
+        countReqArray = (originalRequest.body.match(new RegExp(reqArray, 'g')) || []).length,
+        i, j, k, t, counter = 0,
+        concatResArray = '';
+
+    for (k = 0; k < countReqArray; k += 1) {
+        concatResArray = concatResArray + '\n\r' + resArray;
+    }
+
+    for (i = 0; i < countReqArray; i += 1) {
+        for (t = 0; t < intoResarray.length; t += 1) {
+            for (j = counter; j < values.length; j += 1) {
+                var regexstring = intoResarray[t];
+                if (concatResArray.search(new RegExp(regexstring + '\\b', '')) !== -1) {
+                    concatResArray = concatResArray.replace((new RegExp(regexstring + '\\b')), values[j]);
+                    counter += 1;
+                }
+            }
+        }
+    }
+    replaceResponse = response.body.replace(dataInto, concatResArray);
+    response.body = replaceResponse;
+}
 
 /**
  * The entry point to execute all behaviors provided in the API
