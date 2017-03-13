@@ -539,7 +539,6 @@ function arrayCopy (originalRequest, arrayConfig, response, values) {
     response.body = replaceResponse;
 }
 
-
 /**
  * The entry point to execute all behaviors provided in the API
  * @param {Object} request - The request object
