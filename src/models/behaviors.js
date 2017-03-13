@@ -6,7 +6,7 @@
  */
 
 // Required files for arrayHandling functionality
-var Q = require('q'), xpath = require('./xpath');
+// var Q = require('q'), xpath = require('./xpath');
 
 
 // The following schemas are used by both the lookup and copy behaviors and should be kept consistent
@@ -370,7 +370,6 @@ function replaceArrayValuesIn (response, token, values, logger) {
 function copy (originalRequest, responsePromise, copyArray, logger) {
     return responsePromise.then(function (response) {
         var Q = require('q');
-
         copyArray.forEach(function (copyConfig) {
             var from = getFrom(originalRequest, copyConfig.from),
                 using = copyConfig.using || {},
@@ -482,7 +481,7 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
 
 // Array Handling main functions xpathArrayvalues, arrayHandling, arrayCopy
 function xpathArrayvalues (from, copyConfig, logger) {
-    var xvalue = [];
+    var xpath = require('./xpath'), xvalue = [];
     (copyConfig.using.selector).forEach(function (selector) {
         var selectionFn = function () {
             var value = xpath.select(selector, copyConfig.using.ns, from, logger);
@@ -494,6 +493,7 @@ function xpathArrayvalues (from, copyConfig, logger) {
 }
 
 function arrayHandling (originalRequest, responsePromise, config, logger) {
+    var Q = require('q');
     return responsePromise.then(function (response) {
         config.forEach(function (arrayConfig) {
             var from = getFrom(originalRequest, arrayConfig.key.from),
@@ -532,7 +532,7 @@ function arrayCopy (originalRequest, arrayConfig, response, values) {
         for (t = 0; t < intoResarray.length; t += 1) {
             for (j = counter; j < values.length; j += 1) {
                 var regexstring = intoResarray[t];
-                if (concatResArray.search(new RegExp(regexstring + '\\b', '')) !== 1) {
+                if (concatResArray.search(new RegExp(regexstring + '\\b', '')) !== -1) {
                     concatResArray = concatResArray.replace((new RegExp(regexstring + '\\b')), values[j]);
                     counter += 1;
                 }
@@ -542,6 +542,7 @@ function arrayCopy (originalRequest, arrayConfig, response, values) {
     replaceResponse = response.body.replace(dataInto, concatResArray);
     response.body = replaceResponse;
 }
+
 
 /**
  * The entry point to execute all behaviors provided in the API
