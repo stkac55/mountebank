@@ -5,6 +5,10 @@
  * @module
  */
 
+// Required files for arrayHandling functionality
+var Q = require('q'), xpath = require('./xpath');
+
+
 // The following schemas are used by both the lookup and copy behaviors and should be kept consistent
 var fromSchema = {
         _required: true,
@@ -563,6 +567,9 @@ function execute (request, response, behaviors, logger) {
         lookupFn = behaviors.lookup ?
             function (result) { return lookup(request, result, behaviors.lookup, logger); } :
             combinators.identity,
+        arrayHandlingFn = behaviors.arrayHandling ?
+            function (result) { return arrayHandling(request, result, behaviors.arrayHandling, logger); } :
+            combinators.identity,
         shellTransformFn = behaviors.shellTransform ?
             function (result) { return shellTransform(request, result, behaviors.shellTransform, logger); } :
             combinators.identity,
@@ -572,7 +579,7 @@ function execute (request, response, behaviors, logger) {
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));
 
-    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, waitFn, Q)(response);
+    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, arrayHandlingFn, waitFn, Q)(response);
 }
 
 module.exports = {
