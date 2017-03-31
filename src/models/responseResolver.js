@@ -67,25 +67,7 @@ function create (proxy, postProcess) {
         }
     }
 
-    function multipleXpathvalues (predicate, title) {
-        var i, buildPredicate = [], storePredicate = [], finalPredicate = [];
-        for (i = 0; i < title.length; i += 1) {
-            buildPredicate.push(predicate);
-        }
-
-        buildPredicate.forEach(function (storeObject, j) {
-            storeObject.deepEquals.body = title[j].toString();
-            storePredicate.push(JSON.parse(JSON.stringify(storeObject)));
-        });
-        storePredicate.forEach(function (xpathObject, t) {
-            xpathObject.xpath.selector = '(' + xpathObject.xpath.selector + ')' + '[' + (t + 1) + ']';
-            predicate.xpath = xpathObject.xpath;
-            finalPredicate.push(JSON.parse(JSON.stringify(xpathObject)));
-        });
-        return finalPredicate;
-    }
-
-    function xpathValue (request, matcher, predicate, predicates) {
+    function xpathValue (request, value, field, predicate, predicates) {
         var reqBody = (request.body).toString();
        //  var value = matcher.matches.xpath;
         predicate.deepEquals = {};
@@ -93,8 +75,8 @@ function create (proxy, postProcess) {
             var xpath = require('xpath');
             var dom = require('xmldom').DOMParser;
             var doc = new dom().parseFromString(request.body);
-            var savePath = matcher.matches.xpath.selector;
-            var ns = matcher.matches.xpath.ns;
+            var savePath = value.xpath.selector;
+            var ns = value.xpath.ns;
             if (typeof ns !== 'undefined') {
                 var selectFn = xpath.useNamespaces(ns || {}),
                     result = selectFn(savePath, doc),
@@ -106,24 +88,24 @@ function create (proxy, postProcess) {
             if (title.length > 1) {
                 for (var i = 0; i < title.length; i += 1) {
                     predicate.deepEquals.body = title[i].toString();
-                    predicate.xpath = matcher.matches.xpath;
+                    predicate.xpath = value.xpath;
                 }
-                predicate = multipleXpathvalues(predicate, title);
+                predicate = multiplepathvalues(predicate, field, title);
                 for (var j = 1; j < title.length; j += 1) {
                     predicates.push(predicate[j - 1]);
                 }
             }
             else {
                 predicate.deepEquals.body = title.toString();
-                predicate.xpath = matcher.matches.xpath;
+                predicate.xpath = value.xpath;
             }
         }
         return predicates;
     }
 
-    function multipleJsonpathvalues (predicate, title) {
+    function multiplepathvalues (predicate, title) {
         var i, buildPredicate = [], storePredicate = [], finalPredicate = [];
-        for (i = 0; i < title.length; i = 1) {
+        for (i = 0; i < title.length; i += 1) {
             buildPredicate.push(predicate);
         }
 
@@ -131,36 +113,47 @@ function create (proxy, postProcess) {
             storeObject.deepEquals.body = title[j].toString();
             storePredicate.push(JSON.parse(JSON.stringify(storeObject)));
         });
+
+        if (field == "jsonpath") {
         storePredicate.forEach(function (jsonpathObject, t) {
             jsonpathObject.jsonpath.selector = (jsonpathObject.jsonpath.selector).replace('*', t);
             predicate.jsonpath = jsonpathObject.jsonpath;
             finalPredicate.push(JSON.parse(JSON.stringify(jsonpathObject)));
         });
         return finalPredicate;
+        }
+        if (field == "xpath") {
+        storePredicate.forEach(function (xpathObject, t) {
+            xpathObject.xpath.selector = '(' + xpathObject.xpath.selector + ')' + '[' + (t + 1) + ']';
+            predicate.xpath = xpathObject.xpath;
+            finalPredicate.push(JSON.parse(JSON.stringify(xpathObject)));
+        });
+        return finalPredicate;
+        }
     }
 
-    function jsonpathValue (request, matcher, predicate, predicates) {
+    function jsonpathValue (request, value, field, predicate, predicates) {
         var reqBody = (request.body).toString();
         predicate.deepEquals = {};
         if (reqBody !== '') {
             var parseJson = require('parse-json');
             var jsonPath = require('jsonpath-plus');
             var jsonDoc = parseJson(reqBody);
-            var savePath = matcher.matches.jsonpath.selector;
+            var savePath = value.jsonpath.selector;
             var title = jsonPath(savePath, jsonDoc);
             if (title.length > 1) {
-                for (var i = 0; i < title.length; i = 1) {
+                for (var i = 0; i < title.length; i += 1) {
                     predicate.deepEquals.body = title[i].toString();
-                    predicate.jsonpath = matcher.matches.jsonpath;
+                    predicate.jsonpath = value.jsonpath;
                 }
-                predicate = multipleJsonpathvalues(predicate, title);
-                for (var j = 1; j < title.length; j = 1) {
+                predicate = multiplepathvalues(predicate, field, title);
+                for (var j = 1; j < title.length; j += 1) {
                     predicates.push(predicate[j - 1]);
                 }
             }
             else {
                 predicate.deepEquals.body = title.toString();
-                predicate.jsonpath = matcher.matches.jsonpath;
+                predicate.jsonpath = value.jsonpath;
             }
         }
         return predicates;
@@ -201,12 +194,14 @@ function create (proxy, postProcess) {
                     predicate.deepEquals = {};
                     predicate.deepEquals[fieldName] = request[fieldName];
                 }
-                else if (((fieldName === 'xpath') || (fieldName === 'jsonpath')) && (value !== true)) {
+                else if ((fieldName === 'body') && (value !== true)) {
                     var fnMap = {
                         xpath: xpathValue,
                         jsonpath: jsonpathValue
                     };
-                    fnMap[fieldName](request, matcher, predicate, predicates);
+                    Object.keys(value).forEach(function (field) {                    
+                    fnMap[field](request, value, field, predicate, predicates);
+                })
                 }
                 else {
                     predicate.equals = {};
