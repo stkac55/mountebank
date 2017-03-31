@@ -69,7 +69,6 @@ function create (proxy, postProcess) {
 
     function xpathValue (request, value, field, predicate, predicates) {
         var reqBody = (request.body).toString();
-       //  var value = matcher.matches.xpath;
         predicate.deepEquals = {};
         if (reqBody !== '') {
             var xpath = require('xpath');
@@ -90,7 +89,7 @@ function create (proxy, postProcess) {
                     predicate.deepEquals.body = title[i].toString();
                     predicate.xpath = value.xpath;
                 }
-                predicate = multiplepathvalues(predicate, field, title);
+                predicate = multiplePathValues(predicate, field, title);
                 for (var j = 1; j < title.length; j += 1) {
                     predicates.push(predicate[j - 1]);
                 }
@@ -103,7 +102,7 @@ function create (proxy, postProcess) {
         return predicates;
     }
 
-    function multiplepathvalues (predicate, field, title) {
+    function multiplePathValues (predicate, field, title) {
         var i, buildPredicate = [], storePredicate = [], finalPredicate = [];
         for (i = 0; i < title.length; i += 1) {
             buildPredicate.push(predicate);
@@ -114,21 +113,21 @@ function create (proxy, postProcess) {
             storePredicate.push(JSON.parse(JSON.stringify(storeObject)));
         });
 
-        if (field == "jsonpath") {
-        storePredicate.forEach(function (jsonpathObject, t) {
-            jsonpathObject.jsonpath.selector = (jsonpathObject.jsonpath.selector).replace('*', t);
-            predicate.jsonpath = jsonpathObject.jsonpath;
-            finalPredicate.push(JSON.parse(JSON.stringify(jsonpathObject)));
-        });
-        return finalPredicate;
+        if (field === 'jsonpath') {
+            storePredicate.forEach(function (jsonpathObject, t) {
+                jsonpathObject.jsonpath.selector = (jsonpathObject.jsonpath.selector).replace('*', t);
+                predicate.jsonpath = jsonpathObject.jsonpath;
+                finalPredicate.push(JSON.parse(JSON.stringify(jsonpathObject)));
+            });
+            return finalPredicate;
         }
-        if (field == "xpath") {
-        storePredicate.forEach(function (xpathObject, t) {
-            xpathObject.xpath.selector = '(' + xpathObject.xpath.selector + ')' + '[' + (t + 1) + ']';
-            predicate.xpath = xpathObject.xpath;
-            finalPredicate.push(JSON.parse(JSON.stringify(xpathObject)));
-        });
-        return finalPredicate;
+        else {
+            storePredicate.forEach(function (xpathObject, t) {
+                xpathObject.xpath.selector = xpathObject.xpath.selector + '[' + (t + 1) + ']';
+                predicate.xpath = xpathObject.xpath;
+                finalPredicate.push(JSON.parse(JSON.stringify(xpathObject)));
+            });
+            return finalPredicate;
         }
     }
 
@@ -146,7 +145,7 @@ function create (proxy, postProcess) {
                     predicate.deepEquals.body = title[i].toString();
                     predicate.jsonpath = value.jsonpath;
                 }
-                predicate = multiplepathvalues(predicate, field, title);
+                predicate = multiplePathValues(predicate, field, title);
                 for (var j = 1; j < title.length; j += 1) {
                     predicates.push(predicate[j - 1]);
                 }
@@ -199,9 +198,9 @@ function create (proxy, postProcess) {
                         xpath: xpathValue,
                         jsonpath: jsonpathValue
                     };
-                    Object.keys(value).forEach(function (field) {                    
-                    fnMap[field](request, value, field, predicate, predicates);
-                })
+                    Object.keys(value).forEach(function (field) {
+                        fnMap[field](request, value, field, predicate, predicates);
+                    });
                 }
                 else {
                     predicate.equals = {};
