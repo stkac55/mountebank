@@ -103,7 +103,7 @@ function create (proxy, postProcess) {
         return predicates;
     }
 
-    function multiplepathvalues (predicate, title) {
+    function multiplepathvalues (predicate, field, title) {
         var i, buildPredicate = [], storePredicate = [], finalPredicate = [];
         for (i = 0; i < title.length; i += 1) {
             buildPredicate.push(predicate);
