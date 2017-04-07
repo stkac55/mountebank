@@ -116,7 +116,28 @@ function create (protocols, imposters, Imposter, logger) {
             }
         });
     }
+    function saveImposter(imposter) {                        
+        fs.appendFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/save_text.json', imposter.trim()+",");
+        var text = fs.readFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/save_text.json', "utf-8");        
+        fs.writeFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/imposters_save_text.json', "{\"imposters\":["+text.slice(0,-1)+"]}");
+        deleteImposter()       
+       }
 
+        function deleteImposter(){      
+        var myArray = [];
+        var text_final = fs.readFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/imposters_save_text.json', "utf-8");
+        var parseImposter=JSON.parse(text_final);     
+        (parseImposter.imposters).forEach(function (parse) {
+            var savePort = parse.port
+            var makeObj = {}                
+            makeObj[savePort] = parse;
+            myArray.push(makeObj)  
+            myArray.forEach(function(port, index){
+               Object.keys(myArray[index]).forEach(function(mapping){
+                     console.log(mapping + "   ---------- "+ JSON.stringify(myArray[index]));
+               })
+            })
+       
     /**
      * The function responding to POST /imposters
      * @memberOf module:controllers/impostersController#
