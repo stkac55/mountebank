@@ -366,6 +366,10 @@ function replaceArrayValuesIn (response, token, values, logger) {
 function copy (originalRequest, responsePromise, copyArray, logger) {
     return responsePromise.then(function (response) {
         var Q = require('q');
+<<<<<<< HEAD
+=======
+
+>>>>>>> b57c0e22f06c1a04504ed57ef40b1fee8de24999
         copyArray.forEach(function (copyConfig) {
             var from = getFrom(originalRequest, copyConfig.from),
                 using = copyConfig.using || {},
