@@ -5,6 +5,15 @@
  * @module
  */
 
+var Q = require('q'),
+    helpers = require('../util/helpers'),
+    exceptions = require('../util/errors'),
+    path = require("path"),
+    arrayUniq = require('array-uniq'),
+    unique = require('array-unique'),
+    fs = require('fs'),
+    url = require('url');
+
 /**
  * Creates the imposters controller
  * @param {Object} protocols - the protocol implementations supported by mountebank
@@ -14,20 +23,23 @@
  * @returns {{get: get, post: post, del: del, put: put}}
  */
 function create (protocols, imposters, Imposter, logger) {
-    var exceptions = require('../util/errors'),
-        helpers = require('../util/helpers');
 
     function queryIsFalse (query, key) {
-        return !helpers.defined(query[key]) || query[key].toLowerCase() !== 'false';
+        if (query[key] === undefined) {
+            return true;
+        }
+        return query[key].toLowerCase() !== 'false';
     }
 
     function queryBoolean (query, key) {
-        return helpers.defined(query[key]) && query[key].toLowerCase() === 'true';
+        if (query[key] === undefined) {
+            return false;
+        }
+        return query[key].toLowerCase() === 'true';
     }
 
     function deleteAllImposters () {
-        var Q = require('q'),
-            ids = Object.keys(imposters),
+        var ids = Object.keys(imposters),
             promises = ids.map(function (id) { return imposters[id].stop(); });
 
         ids.forEach(function (id) { delete imposters[id]; });
@@ -35,7 +47,8 @@ function create (protocols, imposters, Imposter, logger) {
     }
 
     function validatePort (port, errors) {
-        var portIsValid = !helpers.defined(port) || (port.toString().indexOf('.') === -1 && port > 0 && port < 65536);
+        var portIsValid = (port === undefined) ||
+            (port.toString().indexOf('.') === -1 && port > 0 && port < 65536);
 
         if (!portIsValid) {
             errors.push(exceptions.ValidationError("invalid value for 'port'"));
@@ -45,7 +58,7 @@ function create (protocols, imposters, Imposter, logger) {
     function validateProtocol (protocol, errors) {
         var Protocol = protocols[protocol];
 
-        if (!helpers.defined(protocol)) {
+        if (typeof protocol === 'undefined') {
             errors.push(exceptions.ValidationError("'protocol' is a required field"));
         }
         else if (!Protocol) {
@@ -54,8 +67,7 @@ function create (protocols, imposters, Imposter, logger) {
     }
 
     function validate (request) {
-        var Q = require('q'),
-            errors = [],
+        var errors = [],
             valid = Q({ isValid: false, errors: errors });
 
         validatePort(request.port, errors);
@@ -82,62 +94,150 @@ function create (protocols, imposters, Imposter, logger) {
         response.send({ errors: [error] });
     }
 
-    function getJSON (options) {
-        return Object.keys(imposters).reduce(function (accumulator, id) {
-            return accumulator.concat(imposters[id].toJSON(options));
-        }, []);
-    }
-
-    function requestDetails (request) {
-        return helpers.socketName(request.socket) + ' => ' + JSON.stringify(request.body);
-    }
-
     /**
      * The function responding to GET /imposters
      * @memberOf module:controllers/impostersController#
      * @param {Object} request - the HTTP request
      * @param {Object} response - the HTTP response
      */
-    function get (request, response) {
+    function get (request, response) {        
         response.format({
             json: function () {
-                var url = require('url'),
-                    query = url.parse(request.url, true).query,
+                //console.log("query "+JSON.stringify(request));
+                var query = url.parse(request.url, true).query,                    
                     options = {
                         replayable: queryBoolean(query, 'replayable'),
                         removeProxies: queryBoolean(query, 'removeProxies'),
                         list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
-                    };
+                    },                    
+                    result = Object.keys(imposters).reduce(function (accumulator, id) {
+                        console.log("imposters in get-- >"+ JSON.stringify(query)); 
+                        //console.log("imposters -- >"+ JSON.stringify(id));                                                 
+                        console.log("imposters -- >"+ JSON.stringify(options));
+                         //console.log("imposters -- >"+ JSON.stringify(imposters[id].toJSON(options)));                        
+                        return accumulator.concat(imposters[id].toJSON(options));
+                    }, []);
 
-                response.send({ imposters: getJSON(options) });
+                response.send({ imposters: result });  
+               // saveImposter(request, response)              
             },
             html: function () {
-                response.render('imposters', { imposters: getJSON() });
+                var result = Object.keys(imposters).reduce(function (accumulator, id) {
+                    return accumulator.concat(imposters[id].toJSON());
+                }, []);
+
+                response.render('imposters', { imposters: result });
             }
         });
     }
-    function saveImposter(imposter) {                        
-        fs.appendFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/save_text.json', imposter.trim()+",");
-        var text = fs.readFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/save_text.json', "utf-8");        
-        fs.writeFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/imposters_save_text.json', "{\"imposters\":["+text.slice(0,-1)+"]}");
-        deleteImposter()       
-       }
 
-        function deleteImposter(){      
-        var myArray = [];
-        var text_final = fs.readFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/imposters_save_text.json', "utf-8");
+   /* function saveImposter(request, response) {                           
+        //var flag_status= JSON.stringify(mountebank.save_imposter_flag);
+        //var flag_status_mb = JSON.stringify(mb.save_imposter_flag_mb_1);
+        //console.log ("Imposters flag_status "+JSON.stringify(flag_status_mb));
+                    
+        //if (flag_status.localeCompare("true")==0)    {                  
+                        var stats = fs.statSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json');                
+                        var fileSizeInBytes = stats["size"];                                    
+                        if (fileSizeInBytes==0) {                          
+                       fs.writeFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSON.stringify(accumulator.concat(imposters[id].toJSON(options))));
+                        console.log("write file");
+                             }
+                        else {
+                            console.log("append file");                        
+                         fs.appendFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSON.stringify(accumulator.concat(imposters[id].toJSON(options))));
+                             }
+        } */
+
+    /* function saveImposter (request, response) {  
+     //var Excel = require('exceljs');      
+        var savePort=[],
+            saveImposterarray=[];
+            var saveImposterCollection;
+        //var myMap = new Map();
+                var query = '{"replayable":"true"}',                    
+                    options = {
+                        replayable: queryBoolean(JSON.parse(query), 'replayable'),
+                        removeProxies: queryBoolean(JSON.parse(query), 'removeProxies'),
+                        list: !(queryBoolean(JSON.parse(query), 'replayable') || queryBoolean(JSON.parse(query), 'removeProxies'))
+                    },   
+
+                    result = Object.keys(imposters).reduce(function (accumulator, id) { 
+                        //saveImposterarray.push(imposters[id].toJSON(options));
+                       // console.log("imposters ----> "+JSON.stringify(imposters));
+                        //fs.appendFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSON.stringify(imposters[id].toJSON(options)));                        
+                        //fs.appendFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSO.stringify(accumulator.concat(imposters[id].toJSON(options))));                                                                       
+                       // fs.writeFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSON.stringify(accumulator.concat(imposters[id].toJSON(options))));
+                       var stats = fs.statSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json');                
+                        var fileSizeInBytes = stats["size"];                                    
+                        if (fileSizeInBytes!=0) {                          
+                        fs.writeFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSON.stringify(imposters[id].toJSON(options)));                        
+                        console.log("read file");
+                             }
+                        else {
+                            console.log("Write file");                            
+                           fs.writeFileSync('D:/Mountebank/mountebank-v1.9.0-win-x64/mountebank/src/save_text.json', JSON.stringify(imposters[id].toJSON(options)));
+                             } 
+                        return accumulator.concat(imposters[id].toJSON(options));
+                        }, []);  
+
+
+                }*/
+
+        function removeLink () {
+            console.log("entereds")
+            //var query = url.parse(request.url, true).query,                    
+                    options = {
+                        replayable: {"replayable":true,"removeProxies":false,"list":false}
+                        
+                       // list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
+                    }
+                    var spliceImp = imposter.toJSON(options)
+                    console.log("spliceimp  ============== "+JSON.stringify(spliceImp));
+        } 
+                       
+       function saveImposter(imposter) {   
+       //console.log("imposter check ----->"+ "\'"+ imposter+"\'" )       
+        var saveText = path.join(__dirname+ '/../../../save_text.json');
+        var impostersSavetext = path.join(__dirname+ '/../../../imposters_save_text.json');    
+        //var saveImposterstring = "\'"+ imposter+"\'" 
+        fs.appendFileSync(saveText, imposter.trim()+",");
+        var text = fs.readFileSync(saveText, "utf-8");        
+        fs.writeFileSync(impostersSavetext, "{\"imposters\":["+text.slice(0,-1)+"]}");
+        var text_final = fs.readFileSync(impostersSavetext, "utf-8");
+        var parseImposter=JSON.parse(text_final);
+        var arrayStruc = JSON.stringify(parseImposter.imposters);
+         
+        /* var myArray = [];
+         var portCollection =[];
+        //var myArray1 = [];
+        var text_final = fs.readFileSync(impostersSavetext, "utf-8");
         var parseImposter=JSON.parse(text_final);     
         (parseImposter.imposters).forEach(function (parse) {
-            var savePort = parse.port
-            var makeObj = {}                
-            makeObj[savePort] = parse;
-            myArray.push(makeObj)  
-            myArray.forEach(function(port, index){
-               Object.keys(myArray[index]).forEach(function(mapping){
-                     console.log(mapping + "   ---------- "+ JSON.stringify(myArray[index]));
-               })
-            })
+            //console.log("   ---------- "+ JSON.stringify(parse));
+            var savePort = (parse.port).toString();
+            portCollection.push(savePort)
+            var deletePort = id.toString();
+            if (portCollection.indexOf(savePort)!==-1) {
+                myArray.push(parse)
+            }          
+        });
+        fs.writeFileSync(impostersSavetext, "{\"imposters\":"+JSON.stringify(myArray)+"}");*/
+
+
+
+        //var arrayStruc = ['{"protocol":"http","port":7772,"numberOfRequests":0,"requests":[],"stubs":[{"responses":[{"is":{"body":"This took at least half a second to send"},"_behaviors":{"wait":500}}]}],"_links":{"self":{"href":"/imposters/7771"}}}','{"protocol":"http","port":7771,"numberOfRequests":0,"requests":[],"stubs":[{"responses":[{"is":{"body":"This took at least half a second to send"},"_behaviors":{"wait":500}}]}],"_links":{"self":{"href":"/imposters/7771"}}}','{"protocol":"http","port":7771,"numberOfRequests":0,"requests":[],"stubs":[{"responses":[{"is":{"body":"This took at least half a second to send"},"_behaviors":{"wait":500}}]}],"_links":{"self":{"href":"/imposters/7771"}}}'];
+       //var newTest =  Array.from(new Set(arrayStruc))
+        //console.log(" ++++++++++++++ "+ newTest);
+       // var uniqueArray = arrayUniq(arrayStruc);
+        //console.log("--------------- "+uniqueArray );    
+       // (parseImposter.imposters).forEach(function (parse) {
+
+       // })
+       }
        
+
+
     /**
      * The function responding to POST /imposters
      * @memberOf module:controllers/impostersController#
@@ -149,26 +249,33 @@ function create (protocols, imposters, Imposter, logger) {
         var protocol = request.body.protocol,
             validationPromise = validate(request.body);
 
-        logger.debug(requestDetails(request));
+        logger.debug(helpers.socketName(request.socket) + ' => ' + JSON.stringify(request.body));
 
         return validationPromise.then(function (validation) {
-            var Q = require('q');
-
             if (validation.isValid) {
                 return Imposter.create(protocols[protocol], request.body).then(function (imposter) {
                     imposters[imposter.port] = imposter;
                     response.setHeader('Location', imposter.url);
-                    response.statusCode = 201;
+                    response.statusCode = 201;                                  
                     response.send(imposter.toJSON());
+
+                    //var str= CircularJSON.stringify(request);
+                   // console.log("request   "+str);
+                   var store_1= JSON.stringify(imposter); 
+                   //removeLink();                       
+                    //write_file(store_1);
+                    saveImposter(store_1);
                 }, function (error) {
                     respondWithCreationError(response, error);
                 });
+               
             }
             else {
                 respondWithValidationErrors(response, validation.errors);
                 return Q(false);
             }
-        });
+            //saveImposter(request, response);
+        });        
     }
 
     /**
@@ -179,15 +286,17 @@ function create (protocols, imposters, Imposter, logger) {
      * @returns {Object} A promise for testing purposes
      */
     function del (request, response) {
-        var url = require('url'),
-            query = url.parse(request.url, true).query,
+        //console.log("id-----------> ");
+        var query = url.parse(request.url, true).query,
             options = {
                 // default to replayable for backwards compatibility
                 replayable: queryIsFalse(query, 'replayable'),
                 removeProxies: queryBoolean(query, 'removeProxies')
             },
-            json = getJSON(options);
-
+            json = Object.keys(imposters).reduce(function (accumulator, id) {
+               // deleteImposter(id);
+                return accumulator.concat(imposters[id].toJSON(options));                
+            }, []);
         return deleteAllImposters().then(function () {
             response.send({ imposters: json });
         });
@@ -201,13 +310,12 @@ function create (protocols, imposters, Imposter, logger) {
      * @returns {Object} A promise for testing purposes
      */
     function put (request, response) {
-        var Q = require('q'),
-            requestImposters = request.body.imposters || [],
+        var requestImposters = request.body.imposters || [],
             validationPromises = requestImposters.map(function (imposter) {
                 return validate(imposter, logger);
             });
 
-        logger.debug(requestDetails(request));
+        logger.debug(helpers.socketName(request.socket) + ' => ' + JSON.stringify(request.body));
 
         return Q.all(validationPromises).then(function (validations) {
             var isValid = validations.every(function (validation) {
@@ -217,6 +325,9 @@ function create (protocols, imposters, Imposter, logger) {
             if (isValid) {
                 return deleteAllImposters().then(function () {
                     var creationPromises = request.body.imposters.map(function (imposter) {
+                        var store_EJS= JSON.stringify(imposter);
+                        //console.log ("EJS imposters "+store_EJS);
+                        saveImposter(store_EJS);
                         return Imposter.create(protocols[imposter.protocol], imposter);
                     });
 
