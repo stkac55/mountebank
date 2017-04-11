@@ -158,10 +158,6 @@ function create (proxy, postProcess) {
         return predicates;
     }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> b57c0e22f06c1a04504ed57ef40b1fee8de24999
     function buildEquals (request, matchers) {
         var result = {};
         Object.keys(matchers).forEach(function (key) {
