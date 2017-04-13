@@ -209,6 +209,10 @@ function create (protocols, imposters, Imposter, logger) {
                 removeProxies: queryBoolean(query, 'removeProxies')
             },
             json = getJSON(options);
+            json.forEach(function(id) {
+                var id = id.port;
+                deleteAllimposter(id);                
+            })
 
         return deleteAllImposters().then(function () {
             response.send({ imposters: json });
@@ -239,6 +243,8 @@ function create (protocols, imposters, Imposter, logger) {
             if (isValid) {
                 return deleteAllImposters().then(function () {
                     var creationPromises = request.body.imposters.map(function (imposter) {
+                        var store_EJS= JSON.stringify(imposter);                        
+                        saveImposter(store_EJS);
                         return Imposter.create(protocols[imposter.protocol], imposter);
                     });
 
