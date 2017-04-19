@@ -159,6 +159,9 @@ function create (options) {
         server = app.listen(options.port, host, function () {
             logger.info('mountebank v%s now taking orders - point your browser to http://localhost:%s for help',
                 thisPackage.version, options.port);
+            var saveImposters_flag;            
+            saveImposters_flag = JSON.stringify(options.saveImposters);
+            module.exports.saveImposters_flag = saveImposters_flag; 
             logger.debug('config: ' + JSON.stringify({
                 options: options,
                 process: {
