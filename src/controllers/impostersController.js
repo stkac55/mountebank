@@ -117,13 +117,14 @@ function create (protocols, imposters, Imposter, logger) {
         });
     }
 		function saveImposter(imposter) { 
-		var path = require("path");   
-		var fs = require('fs');		
+        var mountebank = require("../mountebank");            
+        var flag_status = (mountebank.saveImposters_flag).toString();        
+        if (flag_status.localeCompare("true")==0) {
+        var path = require("path");   
+        var fs = require('fs');     
         var saveText = path.join(__dirname+ '/../../../store_imposters.json');
-        var impostersSavetext = path.join(__dirname+ '/../../../imposters_template.json'); 
-        var re = /(,"_links)(.*)("}})/;  
-        var imposterTrimmed = imposter.replace(re, "");         
-        fs.appendFileSync(saveText, imposterTrimmed.trim()+",");
+        var impostersSavetext = path.join(__dirname+ '/../../../imposters_template.json');         
+        fs.appendFileSync(saveText, imposter.trim()+",");
         var text = fs.readFileSync(saveText, "utf-8");        
         fs.writeFileSync(impostersSavetext, "{\"imposters\":["+text.slice(0,-1)+"]}");
         var text_final = fs.readFileSync(impostersSavetext, "utf-8");
@@ -133,15 +134,20 @@ function create (protocols, imposters, Imposter, logger) {
         var portCollection =[];        
         var text_final = fs.readFileSync(impostersSavetext, "utf-8");
         var parseImposter=JSON.parse(text_final);     
-        (parseImposter.imposters).forEach(function (parse) {                               
+        (parseImposter.imposters).forEach(function (parse) {  
+            delete parse._links;                             
             var savePort = JSON.stringify(parse.port);
-            if (portCollection.indexOf(savePort) ==-1) {             
+            if (portCollection.indexOf(savePort) ==-1) {                             
                 myArray.push(parse)               
                 portCollection.push(savePort)                
-            }  
-            //else console.log("Already this"+ "\""+savePort+"\""+ "port is used. Check " +impostersSavetext+" this file for more imposter");        
-        });
+            }             
+        });        
+        if (portCollection.length<=1) {
+        console.log("WARNING : These are used ports "+ "\""+portCollection+"\""+ " Use unique ports for each imposters. For more Details check "+impostersSavetext);  
+                    }
         fs.writeFileSync(impostersSavetext, "{\"imposters\":"+JSON.stringify(myArray)+"}");        
+            }            
+
        }
     /**
      * The function responding to POST /imposters
