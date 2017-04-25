@@ -121,18 +121,16 @@ function create (protocols, imposters, Imposter, logger) {
         var flag_status = (mountebank.saveImposters_flag).toString();        
         if (flag_status.localeCompare("true")==0) {
         var path = require("path");   
-        var fs = require('fs');     
-        var saveText = path.join(__dirname+ '/../../../store_imposters.json');
-        var impostersSavetext = path.join(__dirname+ '/../../../imposters_template.json');         
-        fs.appendFileSync(saveText, imposter.trim()+",");
-        var text = fs.readFileSync(saveText, "utf-8");        
-        fs.writeFileSync(impostersSavetext, "{\"imposters\":["+text.slice(0,-1)+"]}");
-        var text_final = fs.readFileSync(impostersSavetext, "utf-8");
+        var fs = require('fs');                    
+        fs.appendFileSync("store_imposters.json", imposter.trim()+",");
+        var text = fs.readFileSync("store_imposters.json", "utf-8");        
+        fs.writeFileSync("imposters_template.json", "{\"imposters\":["+text.slice(0,-1)+"]}");
+        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
         var parseImposter=JSON.parse(text_final);
         var arrayStruc = JSON.stringify(parseImposter.imposters);         
         var myArray = [];
         var portCollection =[];        
-        var text_final = fs.readFileSync(impostersSavetext, "utf-8");
+        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
         var parseImposter=JSON.parse(text_final);     
         (parseImposter.imposters).forEach(function (parse) {  
             delete parse._links;                             
@@ -141,11 +139,8 @@ function create (protocols, imposters, Imposter, logger) {
                 myArray.push(parse)               
                 portCollection.push(savePort)                
             }             
-        });        
-        if (portCollection.length<=1) {
-        console.log("WARNING : These are used ports "+ "\""+portCollection+"\""+ " Use unique ports for each imposters. For more Details check "+impostersSavetext);  
-                    }
-        fs.writeFileSync(impostersSavetext, "{\"imposters\":"+JSON.stringify(myArray)+"}");        
+        });               
+        fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(myArray)+"}");        
             }            
 
        }
@@ -186,9 +181,9 @@ function create (protocols, imposters, Imposter, logger) {
 		function deleteAllimposter(id){ 
 		var path = require("path");   
 		var fs = require('fs');			
-        var myArray = [];              
-        var impostersSavetext = path.join(__dirname+ '/../../../imposters_template.json');  
-        var text_final = fs.readFileSync(impostersSavetext, "utf-8");
+        var myArray = []; 
+        var myArrayStored = [];                         
+        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
         var parseImposter=JSON.parse(text_final);     
         (parseImposter.imposters).forEach(function (parse) {           
             var savePort = (parse.port).toString();
@@ -197,7 +192,25 @@ function create (protocols, imposters, Imposter, logger) {
                 myArray.push(parse)
             }          
         });         
-         fs.writeFileSync(impostersSavetext, "{\"imposters\":"+JSON.stringify(myArray)+"}");
+         fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(myArray)+"}");
+         var text_final_Stored = fs.readFileSync("store_imposters.json", "utf-8");
+         var constructStored = "["+text_final_Stored.slice(0,-1)+"]";
+         var parseImposterStored=JSON.parse(constructStored)
+         parseImposterStored.forEach(function (parseStored) {
+            var savePortStored = (parseStored.port).toString();
+            var deletePortStored = id.toString();            
+            if (savePortStored !==deletePortStored ) {                
+                myArrayStored.push(parseStored)               
+            }            
+         })
+         var eliminateArray = JSON.stringify(myArrayStored);          
+         var finalArray = eliminateArray.slice(1,-1);                 
+         fs.writeFileSync("store_imposters.json", finalArray.trim()+",");
+         var text_final_Stored_DeleteComma = fs.readFileSync("store_imposters.json", "utf-8");
+         if (text_final_Stored_DeleteComma == ","){
+           text_final_Stored_DeleteComma.replace(/^,/, '')
+           fs.writeFileSync("store_imposters.json", "");
+         }
        }
     /**
      * The function responding to DELETE /imposters
