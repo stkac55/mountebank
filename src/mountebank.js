@@ -150,8 +150,9 @@ function create (options) {
         
     function portStored(saveImposterStatus) {        
         var fs = require('fs');   
-        var portStore =[]
-        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
+        var portStore =[]       
+        if (fs.existsSync("imposters_template.json")===true) {
+        var text_final = fs.readFileSync("imposters_template.json", "utf-8");        
         if ((saveImposterStatus===true) && (text_final!=="")) {              
         var parseImposter=JSON.parse(text_final);
         (parseImposter.imposters).forEach(function (parse) {
@@ -159,8 +160,10 @@ function create (options) {
         })
         console.log("WARNING: Already these ports are used "+portStore+" use unique ports for imposters. Check \"imposters_template.json\" for stored imposter collections")
         }
-        
+            }
+        else fs.writeFileSync('imposters_template.json',"");
     }
+    
     function isAllowedConnection (ipAddress) {
         return allowedIPs.some(function (allowedIP) {
             return allowedIP === '*' || allowedIP.toLowerCase() === ipAddress.toLowerCase();
