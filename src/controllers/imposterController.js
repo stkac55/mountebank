@@ -60,8 +60,7 @@ function create (imposters) {
                 saveArray = parseImposter.imposters
                 saveArray.push(saveImposter)                                                                
             }      
-        });
-       // fs.appendFileSync("store_imposters.json", JSON.stringify(saveImposter)+",");                 
+        });                       
         fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(saveArray)+"}");
         
         var text_final_Stored = fs.readFileSync("store_imposters.json", "utf-8");
@@ -70,22 +69,19 @@ function create (imposters) {
         parseImposterStored.forEach(function (parseStored, index) {
             var savePortStored = (parseStored.port).toString();                        
             if (savePortStored === resultPort) {                
-                parseImposterStored.splice(index, 1);               
-                //saveArrayStored = parseImposterStored
+                parseImposterStored.splice(index, 1);                               
                 parseImposterStored.push(saveImposter)                                                                
             }      
         });
-         var eliminateArray = JSON.stringify(parseImposterStored);  
-         console.log("eliminateArray----> "+eliminateArray) ;       
+         var eliminateArray = JSON.stringify(parseImposterStored);           
          var finalArray = eliminateArray.slice(1,-1); 
         fs.writeFileSync("store_imposters.json", finalArray+","); 
-
        }
     
     
 	function deleteImposter(id){ 
-		var path = require("path");   
-		var fs = require('fs');	
+        var path = require("path");   
+        var fs = require('fs'); 
         var myArray = []; 
         var myArrayStored = [];               
         var text_final = fs.readFileSync("imposters_template.json", "utf-8");
@@ -113,7 +109,7 @@ function create (imposters) {
          fs.writeFileSync("store_imposters.json", finalArray.trim()+",");
          var text_final_Stored_DeleteComma = fs.readFileSync("store_imposters.json", "utf-8");
          if (text_final_Stored_DeleteComma == ","){
-           text_final_Stored_DeleteComma.replace(/^,/, '')
+           text_final_Stored_DeleteComma.replace(/^\,/, '')
            fs.writeFileSync("store_imposters.json", "");
          }
        }
