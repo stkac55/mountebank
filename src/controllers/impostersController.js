@@ -139,7 +139,7 @@ function create (protocols, imposters, Imposter, logger) {
                 myArray.push(parse)               
                 portCollection.push(savePort)                
             }             
-        });               
+        });              
         fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(myArray)+"}");        
             }            
 
@@ -179,8 +179,8 @@ function create (protocols, imposters, Imposter, logger) {
         });
     }
 		function deleteAllimposter(id){ 
-		var path = require("path");   
-		var fs = require('fs');			
+        var path = require("path");   
+        var fs = require('fs');         
         var myArray = []; 
         var myArrayStored = [];                         
         var text_final = fs.readFileSync("imposters_template.json", "utf-8");
@@ -207,7 +207,7 @@ function create (protocols, imposters, Imposter, logger) {
          var finalArray = eliminateArray.slice(1,-1);                 
          fs.writeFileSync("store_imposters.json", finalArray.trim()+",");
          var text_final_Stored_DeleteComma = fs.readFileSync("store_imposters.json", "utf-8");
-         if (text_final_Stored_DeleteComma == ","){
+          if (text_final_Stored_DeleteComma == ","){
            text_final_Stored_DeleteComma.replace(/^,/, '')
            fs.writeFileSync("store_imposters.json", "");
          }
