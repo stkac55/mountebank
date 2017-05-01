@@ -147,23 +147,7 @@ function create (options) {
             response.render(endpoint.substring(1));
         });
     });
-        
-    function portStored(saveImposterStatus) {        
-        var fs = require('fs');   
-        var portStore =[]       
-        if (fs.existsSync("imposters_template.json")===true) {
-        var text_final = fs.readFileSync("imposters_template.json", "utf-8");        
-        if ((saveImposterStatus===true) && (text_final!=="")) {              
-        var parseImposter=JSON.parse(text_final);
-        (parseImposter.imposters).forEach(function (parse) {
-                portStore.push(parse.port)                
-        })
-        console.log("WARNING: Already these ports are used "+portStore+" use unique ports for imposters. Check \"imposters_template.json\" for stored imposter collections")
-        }
-            }
-        else fs.writeFileSync('imposters_template.json',"");
-    }
-    
+
     function isAllowedConnection (ipAddress) {
         return allowedIPs.some(function (allowedIP) {
             return allowedIP === '*' || allowedIP.toLowerCase() === ipAddress.toLowerCase();
@@ -175,10 +159,6 @@ function create (options) {
         server = app.listen(options.port, host, function () {
             logger.info('mountebank v%s now taking orders - point your browser to http://localhost:%s for help',
                 thisPackage.version, options.port);
-            var saveImposters_flag;                        
-            saveImposters_flag = JSON.stringify(options.saveImposters);
-            portStored(options.saveImposters)
-            module.exports.saveImposters_flag = saveImposters_flag; 
             logger.debug('config: ' + JSON.stringify({
                 options: options,
                 process: {
