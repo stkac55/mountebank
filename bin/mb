@@ -322,6 +322,13 @@ var aliases = {
             alias: aliases.i,
             global: false
         },
+        saveImposters: {
+            default: false,
+            description: 'set to allow save imposters ',
+            type: 'boolean',
+            alias: aliases.si,
+            global: false
+        },
         localOnly: {
             default: false,
             description: 'allow connections only from localhost',
@@ -379,6 +386,7 @@ var aliases = {
         logfile: options.logfile,
         loglevel: options.loglevel,
         allowInjection: options.allowInjection,
+        saveImposters: options.saveImposters,
         localOnly: options.localOnly,
         ipWhitelist: options.ipWhitelist,
         mock: options.mock,
