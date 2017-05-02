@@ -52,6 +52,7 @@ function create (imposters) {
         var arrayStruc =[];
         var resultPort = (saveImposter.port).toString()                 
         var text_final = fs.readFileSync("imposters_template.json", "utf-8");
+        if (text_final!=="") {
         var parseImposter=JSON.parse(text_final);     
         (parseImposter.imposters).forEach(function (parse, index) {            
             var savePort = (parse.port).toString();                        
@@ -77,6 +78,7 @@ function create (imposters) {
          var finalArray = eliminateArray.slice(1,-1); 
         fs.writeFileSync("store_imposters.json", finalArray+","); 
        }
+     }
     
     
 	function deleteImposter(id){ 
@@ -85,6 +87,7 @@ function create (imposters) {
         var myArray = []; 
         var myArrayStored = [];               
         var text_final = fs.readFileSync("imposters_template.json", "utf-8");
+        if (text_final!=="") {
         var parseImposter=JSON.parse(text_final);     
         (parseImposter.imposters).forEach(function (parse) {            
             var savePort = (parse.port).toString();
@@ -113,6 +116,7 @@ function create (imposters) {
            fs.writeFileSync("store_imposters.json", "");
          }
        }
+    }
     
     /**
      * The function responding to DELETE /imposters/:port
