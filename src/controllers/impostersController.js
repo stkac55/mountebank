@@ -184,6 +184,7 @@ function create (protocols, imposters, Imposter, logger) {
         var myArray = []; 
         var myArrayStored = [];                         
         var text_final = fs.readFileSync("imposters_template.json", "utf-8");
+        if (text_final!=="") {            
         var parseImposter=JSON.parse(text_final);     
         (parseImposter.imposters).forEach(function (parse) {           
             var savePort = (parse.port).toString();
@@ -212,6 +213,7 @@ function create (protocols, imposters, Imposter, logger) {
            fs.writeFileSync("store_imposters.json", "");
          }
        }
+        }
     /**
      * The function responding to DELETE /imposters
      * @memberOf module:controllers/impostersController#
