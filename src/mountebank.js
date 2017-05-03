@@ -158,7 +158,7 @@ function create (options) {
         (parseImposter.imposters).forEach(function (parse) {
                 portStore.push(parse.port)                
         })
-        console.log("WARNING: Already these ports are used "+portStore+" use unique ports for imposters. Check \"imposters_template.json\" for stored imposter collections")
+        console.log("WARNING: Already these ports are used "+"\""+portStore+"\""+" use unique ports for imposters. Check \"imposters_template.json\" for stored imposter collections")
         }
             }
         else fs.writeFileSync('imposters_template.json',"");
