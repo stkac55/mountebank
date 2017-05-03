@@ -45,7 +45,10 @@ function create (imposters) {
         });
     }
     
-     function recordImposter(saveImposter){ 
+     function recordImposter(saveImposter){
+        var mountebank = require("../mountebank");            
+        var flag_status = (mountebank.saveImposters_flag).toString();        
+        if (flag_status.localeCompare("true")==0) {  
         var path = require("path");   
         var fs = require('fs'); 
         var saveArray, saveArrayStored;  
@@ -78,6 +81,7 @@ function create (imposters) {
          var finalArray = eliminateArray.slice(1,-1); 
         fs.writeFileSync("store_imposters.json", finalArray+","); 
        }
+      }
      }
     
     
