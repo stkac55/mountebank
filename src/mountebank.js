@@ -178,7 +178,10 @@ function create (options) {
             var saveImposters_flag;                        
             saveImposters_flag = JSON.stringify(options.saveImposters);
             portStored(options.saveImposters)
-            module.exports.saveImposters_flag = saveImposters_flag; 
+            module.exports.saveImposters_flag = saveImposters_flag;
+            var serverPort;                        
+            serverPort = JSON.stringify(options.port);                        
+            module.exports.serverPort = serverPort;
             logger.debug('config: ' + JSON.stringify({
                 options: options,
                 process: {
