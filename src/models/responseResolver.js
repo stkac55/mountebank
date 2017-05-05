@@ -277,8 +277,60 @@ function create (proxy, postProcess) {
             index = responseConfig.proxy.mode === 'proxyAlways' ? stubs.length : stubIndexFor(responseConfig, stubs);
 
         stubs.splice(index, 0, newStub);
+        storeRecorded()
     }
+    
+    function storeRecorded() {
+       var request = require('request');
+       var fs = require('fs'); 
+       var mountebank = require('../mountebank');
+       var flag_status = (mountebank.saveImposters_flag).toString();
+       var serverPort = (mountebank.serverPort).toString();       
+       var imposterStored; 
+       if (flag_status.localeCompare("true")==0) {     
+       request.get({
+                    url: "http://localhost:"+serverPort+"/imposters?replayable=true",
+                    method: "GET"                    
+                    }, function (error, response, body){                    
+                    imposterStored = JSON.parse(body)  ;   
+                    var saveBody = imposterStored.imposters;
+                    var saveArray =[];                  
+                    var replayablePort;
+                    saveBody.forEach(function (saveImposter){
+                    replayablePort=(saveImposter.port).toString();                    
 
+                        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
+                            if (text_final!=="") {
+                            var parseImposter=JSON.parse(text_final);     
+                            (parseImposter.imposters).forEach(function (parse, index) {            
+                                var savePort = (parse.port).toString();                                                       
+                                if (savePort === replayablePort) {                                  
+                                    (parseImposter.imposters).splice(index, 1)
+                                    saveArray = parseImposter.imposters                                   
+                                    saveArray.push(saveImposter)                                                                                                   
+                                }      
+                            });                                                
+                            fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(saveArray)+"}")
+
+                        var text_final_Stored = fs.readFileSync("store_imposters.json", "utf-8");
+                        var constructStored = "["+text_final_Stored.slice(0,-1)+"]";
+                        var parseImposterStored=JSON.parse(constructStored)
+                        parseImposterStored.forEach(function (parseStored, index) {
+                            var savePortStored = (parseStored.port).toString();                        
+                            if (savePortStored === replayablePort) {                
+                                parseImposterStored.splice(index, 1);                               
+                                parseImposterStored.push(saveImposter)                                                                
+                            }      
+                        });
+                         var eliminateArray = JSON.stringify(parseImposterStored);           
+                         var finalArray = eliminateArray.slice(1,-1); 
+                        fs.writeFileSync("store_imposters.json", finalArray+","); 
+                            }
+                    })                                                      
+                });  
+            }
+        }
+    
     function recordProxyResponse (responseConfig, request, response, stubs) {
         if (['proxyOnce', 'proxyAlways'].indexOf(responseConfig.proxy.mode) < 0) {
             responseConfig.proxy.mode = 'proxyOnce';
