@@ -116,34 +116,30 @@ function create (protocols, imposters, Imposter, logger) {
             }
         });
     }
-		function saveImposter(imposter) { 
-        var mountebank = require("../mountebank");            
-        var flag_status = (mountebank.saveImposters_flag).toString();        
-        if (flag_status.localeCompare("true")==0) {
-        var path = require("path");   
-        var fs = require('fs');                    
-        fs.appendFileSync("store_imposters.json", imposter.trim()+",");
-        var text = fs.readFileSync("store_imposters.json", "utf-8");        
-        fs.writeFileSync("imposters_template.json", "{\"imposters\":["+text.slice(0,-1)+"]}");
-        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
-        var parseImposter=JSON.parse(text_final);
-        var arrayStruc = JSON.stringify(parseImposter.imposters);         
-        var myArray = [];
-        var portCollection =[];        
-        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
-        var parseImposter=JSON.parse(text_final);     
-        (parseImposter.imposters).forEach(function (parse) {  
-            delete parse._links;                             
-            var savePort = JSON.stringify(parse.port);
-            if (portCollection.indexOf(savePort) ==-1) {                             
-                myArray.push(parse)               
-                portCollection.push(savePort)                
-            }             
-        });              
-        fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(myArray)+"}");        
-            }            
+    function saveImposter (imposter) {
+        var mountebank = require('../mountebank');
+        var flagStatus = (mountebank.saveImpostersFlag).toString();
+        if (flagStatus.localeCompare('true') === 0) {
+            var fs = require('fs');
+            fs.appendFileSync('store_imposters.json', imposter.trim() + ',');
+            var text = fs.readFileSync('store_imposters.json', 'utf-8');
+            fs.writeFileSync('imposters_template.json', '{"imposters":[' + text.slice(0, -1) + ']}');
+            var textFinal = fs.readFileSync('imposters_template.json', 'utf-8');
+            var parseImposter = JSON.parse(textFinal);
+            var myArray = [];
+            var portCollection = [];
+            (parseImposter.imposters).forEach(function (parse) {
+                delete parse._links;
+                var savePort = JSON.stringify(parse.port);
+                if (portCollection.indexOf(savePort) === -1) {
+                    myArray.push(parse);
+                    portCollection.push(savePort);
+                }
+            });
+            fs.writeFileSync('imposters_template.json', '{"imposters":' + JSON.stringify(myArray) + '}');
+        }
 
-       }
+    }
     /**
      * The function responding to POST /imposters
      * @memberOf module:controllers/impostersController#
@@ -166,8 +162,8 @@ function create (protocols, imposters, Imposter, logger) {
                     response.setHeader('Location', imposter.url);
                     response.statusCode = 201;
                     response.send(imposter.toJSON());
-					var store_1= JSON.stringify(imposter); 
-                    saveImposter(store_1);
+                    var storeImposter = JSON.stringify(imposter);
+                    saveImposter(storeImposter);
                 }, function (error) {
                     respondWithCreationError(response, error);
                 });
@@ -178,42 +174,41 @@ function create (protocols, imposters, Imposter, logger) {
             }
         });
     }
-		function deleteAllimposter(id){ 
-        var path = require("path");   
-        var fs = require('fs');         
-        var myArray = []; 
-        var myArrayStored = [];                         
-        var text_final = fs.readFileSync("imposters_template.json", "utf-8");
-        if (text_final!=="") {            
-        var parseImposter=JSON.parse(text_final);     
-        (parseImposter.imposters).forEach(function (parse) {           
-            var savePort = (parse.port).toString();
-            var deletePort = id.toString();
-            if (savePort !== deletePort) {
-                myArray.push(parse)
-            }          
-        });         
-         fs.writeFileSync("imposters_template.json", "{\"imposters\":"+JSON.stringify(myArray)+"}");
-         var text_final_Stored = fs.readFileSync("store_imposters.json", "utf-8");
-         var constructStored = "["+text_final_Stored.slice(0,-1)+"]";
-         var parseImposterStored=JSON.parse(constructStored)
-         parseImposterStored.forEach(function (parseStored) {
-            var savePortStored = (parseStored.port).toString();
-            var deletePortStored = id.toString();            
-            if (savePortStored !==deletePortStored ) {                
-                myArrayStored.push(parseStored)               
-            }            
-         })
-         var eliminateArray = JSON.stringify(myArrayStored);          
-         var finalArray = eliminateArray.slice(1,-1);                 
-         fs.writeFileSync("store_imposters.json", finalArray.trim()+",");
-         var text_final_Stored_DeleteComma = fs.readFileSync("store_imposters.json", "utf-8");
-          if (text_final_Stored_DeleteComma == ","){
-           text_final_Stored_DeleteComma.replace(/^,/, '')
-           fs.writeFileSync("store_imposters.json", "");
-         }
-       }
+    function deleteAllimposter (id) {
+        var fs = require('fs');
+        var myArray = [];
+        var myArrayStored = [];
+        var textFinal = fs.readFileSync('imposters_template.json', 'utf-8');
+        if (textFinal !== '') {
+            var parseImposter = JSON.parse(textFinal);
+            (parseImposter.imposters).forEach(function (parse) {
+                var savePort = (parse.port).toString();
+                var deletePort = id.toString();
+                if (savePort !== deletePort) {
+                    myArray.push(parse);
+                }
+            });
+            fs.writeFileSync('imposters_template.json', '{"imposters":' + JSON.stringify(myArray) + '}');
+            var textFinalStored = fs.readFileSync('store_imposters.json', 'utf-8');
+            var constructStored = '[' + textFinalStored.slice(0, -1) + ']';
+            var parseImposterStored = JSON.parse(constructStored);
+            parseImposterStored.forEach(function (parseStored) {
+                var savePortStored = (parseStored.port).toString();
+                var deletePortStored = id.toString();
+                if (savePortStored !== deletePortStored) {
+                    myArrayStored.push(parseStored);
+                }
+            });
+            var eliminateArray = JSON.stringify(myArrayStored);
+            var finalArray = eliminateArray.slice(1, -1);
+            fs.writeFileSync('store_imposters.json', finalArray.trim() + ',');
+            var textFinalStoredDeleteComma = fs.readFileSync('store_imposters.json', 'utf-8');
+            if (textFinalStoredDeleteComma === ',') {
+                textFinalStoredDeleteComma.replace(/^,/, '');
+                fs.writeFileSync('store_imposters.json', '');
+            }
         }
+    }
     /**
      * The function responding to DELETE /imposters
      * @memberOf module:controllers/impostersController#
@@ -230,10 +225,10 @@ function create (protocols, imposters, Imposter, logger) {
                 removeProxies: queryBoolean(query, 'removeProxies')
             },
             json = getJSON(options);
-            json.forEach(function(id) {
-                var id = id.port;
-                deleteAllimposter(id);                
-            })
+        json.forEach(function (id) {
+            id = id.port;
+            deleteAllimposter(id);
+        });
 
         return deleteAllImposters().then(function () {
             response.send({ imposters: json });
@@ -264,8 +259,8 @@ function create (protocols, imposters, Imposter, logger) {
             if (isValid) {
                 return deleteAllImposters().then(function () {
                     var creationPromises = request.body.imposters.map(function (imposter) {
-                        var store_EJS= JSON.stringify(imposter);                        
-                        saveImposter(store_EJS);
+                        var storePutImposters = JSON.stringify(imposter);
+                        saveImposter(storePutImposters);
                         return Imposter.create(protocols[imposter.protocol], imposter);
                     });
 
