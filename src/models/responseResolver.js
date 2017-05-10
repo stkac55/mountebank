@@ -291,9 +291,10 @@ function create (proxy, postProcess) {
             request.get({
                 url: 'http://localhost:' + serverPort + '/imposters?replayable=true',
                 method: 'GET'
-            }, function (body) {
+            }, function (error, response, body) {                                   
                 imposterStored = JSON.parse(body);
-                var saveBody = imposterStored.imposters;
+                if ((imposterStored !==null) || (imposterStored !=="") || (imposterStored !==undefined)) { 
+                var saveBody = imposterStored.imposters;                
                 var saveArray = [];
                 var replayablePort;
                 saveBody.forEach(function (saveImposter) {
@@ -326,9 +327,11 @@ function create (proxy, postProcess) {
                         fs.writeFileSync('store_imposters.json', finalArray + ',');
                     }
                 });
+                }
             });
         }
     }
+
 
     function recordProxyResponse (responseConfig, request, response, stubs) {
         if (['proxyOnce', 'proxyAlways'].indexOf(responseConfig.proxy.mode) < 0) {
