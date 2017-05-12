@@ -261,6 +261,7 @@ var aliases = {
         d: 'debug',
         i: 'allowInjection',
         l: 'localOnly',
+        si:'saveImposters',
         m: 'mock',
         p: 'port',
         r: 'removeProxies',
