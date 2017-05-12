@@ -158,9 +158,9 @@ function create (options) {
                 (parseImposter.imposters).forEach(function (parse) {
                     portStore.push(parse.port);
                 });
-               if (portStore.length >= 1) {
-                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check "imposters_template.json" for stored imposter collections');
-                }
+                if (portStore.length >= 1) {
+                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check "imposters_template.json" for stored imposter collections');
+                }
             }
         }
         else { fs.writeFileSync('imposters_template.json', ''); }
