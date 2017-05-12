@@ -118,7 +118,7 @@ function create (imposters) {
             }
         }
     }
-
+  
     /**
      * The function responding to DELETE /imposters/:port
      * @memberOf module:controllers/imposterController#

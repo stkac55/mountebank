@@ -140,6 +140,7 @@ function create (protocols, imposters, Imposter, logger) {
         }
 
     }
+
     /**
      * The function responding to POST /imposters
      * @memberOf module:controllers/impostersController#
@@ -229,7 +230,6 @@ function create (protocols, imposters, Imposter, logger) {
             id = id.port;
             deleteAllimposter(id);
         });
-
         return deleteAllImposters().then(function () {
             response.send({ imposters: json });
         });
@@ -263,7 +263,6 @@ function create (protocols, imposters, Imposter, logger) {
                         saveImposter(storePutImposters);
                         return Imposter.create(protocols[imposter.protocol], imposter);
                     });
-
                     return Q.all(creationPromises);
                 }).then(function (allImposters) {
                     var json = allImposters.map(function (imposter) {
