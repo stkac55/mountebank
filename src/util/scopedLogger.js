@@ -37,14 +37,14 @@ function create (logger, scope) {
 
     wrap(wrappedLogger, logger);
 
-        var net = require('net');
-        var logHost = 'mbusage.kdc.capitalone.com'
-        , logPort = 80
-        , sender = require('os').hostname();
-        var conn = net.createConnection({host: logHost, port: logPort}, function() {
+    var net = require('net');
+    var logHost = 'mbusage.kdc.capitalone.com',
+        logPort = 80;
+        // sender = require('os').hostname();
+    var conn = net.createConnection({ host: logHost, port: logPort }, function () {
         conn.write(JSON.stringify(wrappedLogger));
         conn.end();
-        });
+    });
 
     return wrappedLogger;
 }

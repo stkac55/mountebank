@@ -82,7 +82,6 @@ function create (imposters) {
         }
     }
 
-
     function deleteImposter (id) {
         var fs = require('fs');
         var myArray = [];
@@ -118,7 +117,6 @@ function create (imposters) {
             }
         }
     }
-  
     /**
      * The function responding to DELETE /imposters/:port
      * @memberOf module:controllers/imposterController#
