@@ -140,6 +140,22 @@ function create (protocols, imposters, Imposter, logger) {
         }
 
     }
+    
+    function swaggerError (request, response) {
+        var swaggerSupport = request.body.stubs,
+            swaggerBehavior = require('../models/behaviors'),
+            swaggerImposter = swaggerBehavior.imposterbodyExport;
+        if ((Object.keys(swaggerSupport[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(swaggerSupport[0].responses[0]._behaviors).indexOf('swagger') !== -1) && (swaggerImposter === undefined)) {
+            var parserError = swaggerBehavior.parsererror;
+            delete parserError.mark;
+            delete parserError.stack;
+            var swaggerValidator = { isValid: false, errors: parserError };
+
+            if (swaggerValidator.isValid === false) {
+                respondWithCreationError(response, swaggerValidator.errors);
+            }
+        }
+    }
 
     /**
      * The function responding to POST /imposters
@@ -156,7 +172,7 @@ function create (protocols, imposters, Imposter, logger) {
 
         return validationPromise.then(function (validation) {
             var Q = require('q');
-
+            swaggerError (request, response)
             if (validation.isValid) {
                 return Imposter.create(protocols[protocol], request.body).then(function (imposter) {
                     imposters[imposter.port] = imposter;
