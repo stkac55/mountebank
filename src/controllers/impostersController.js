@@ -176,6 +176,9 @@ function create (protocols, imposters, Imposter, logger) {
         });
     }
     function deleteAllimposter (id) {
+         var mountebank = require('../mountebank');
+        var flagStatus = (mountebank.saveImpostersFlag).toString();
+        if (flagStatus.localeCompare('true') === 0) {
         var fs = require('fs');
         var myArray = [];
         var myArrayStored = [];
@@ -208,6 +211,7 @@ function create (protocols, imposters, Imposter, logger) {
                 textFinalStoredDeleteComma.replace(/^,/, '');
                 fs.writeFileSync('store_imposters.json', '');
             }
+        }
         }
     }
     /**
