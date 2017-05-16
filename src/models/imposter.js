@@ -31,9 +31,6 @@ function createErrorHandler (deferred) {
  * @returns {Object}
  */
 function create (Protocol, request) {
-   // console.log("protocol------> "+JSON.stringify(Protocol));
-   // console.log("request------> "+JSON.stringify(request));
-
     var Q = require('q'),
         deferred = Q.defer(),
         domain = require('domain').create(),
@@ -101,25 +98,25 @@ function create (Protocol, request) {
                 if (options.replayable) {
                     removeNonEssentialInformationFrom(result);
                 }
-                 //console.log("result--------------------> "+JSON.stringify(options.removeProxies))
-                if (options.removeProxies) { 
-
+                if (options.removeProxies) {
                     removeProxiesFrom(result);
                 }
 
-                var test = result.stubs;
+                var test = result.stubs,
+                    swaggerBehavior = require('./behaviors'),
+                    swaggerImposter = swaggerBehavior.imposterbodyExport;
 
                 if ((Object.keys(test[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(test[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
-                    var swaggerBehavior = require('./behaviors');
-                    var swaggerImposter = swaggerBehavior.imposterbodyExport;
+
                     result.stubs = swaggerImposter.stubs;
                     var imposter = require('request');
-
+                    var mountebank = require('../mountebank');
+                    var mbPort = mountebank.serverPort;
                     imposter.delete({
-                        url: 'http://localhost:2525/imposters/' + result.port,
+                        url: 'http://localhost:' + mbPort + '/imposters/' + result.port,
                         method: 'DELETE'
                     }, function () {
-                        
+
                     });
 
                     imposter.post({
@@ -128,9 +125,10 @@ function create (Protocol, request) {
                         json: true,
                         body: result
                     }, function () {
-                        
+
                     });
-                }                
+                }
+
                 return result;
 
             }
