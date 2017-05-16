@@ -465,9 +465,7 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
     return responsePromise.then(function (response) {
         var Q = require('q'),
             lookupPromises = lookupArray.map(function (lookupConfig) {
-                console.log('lookup entry');
                 return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
-                    console.log('lookup entry 2');
                     replaceObjectValuesIn(response, lookupConfig.into, row, logger);
                 });
             });
@@ -476,6 +474,7 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
         logger.error(error);
     });
 }
+
 
 // swagger functions
 function getMockValue (api, schema) {
@@ -830,11 +829,11 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
             });
         return Q.all(swaggerPromises).then(function () { return Q(response); });
     }).catch(function (error) {
+        module.exports.parsererror = error;
         logger.error(error);
     });
 
 }
-
 
 // Array Handling main functions xpathArrayvalues, arrayHandling, arrayCopy
 function xpathArrayvalues (from, copyConfig, logger) {
@@ -924,9 +923,6 @@ function execute (request, response, behaviors, logger) {
         lookupFn = behaviors.lookup ?
             function (result) { return lookup(request, result, behaviors.lookup, logger); } :
             combinators.identity,
-        swaggerFn = behaviors.swagger ?
-            function (result) { return swagger(request, result, behaviors.swagger, logger); } :
-            combinators.identity,
         arrayHandlingFn = behaviors.arrayHandling ?
             function (result) { return arrayHandling(request, result, behaviors.arrayHandling, logger); } :
             combinators.identity,
@@ -939,7 +935,7 @@ function execute (request, response, behaviors, logger) {
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));
 
-    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, swaggerFn, arrayHandlingFn, waitFn, Q)(response);
+    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, arrayHandlingFn, waitFn, Q)(response);
 }
 
 module.exports = {
