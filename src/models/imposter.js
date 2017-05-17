@@ -106,8 +106,8 @@ function create (Protocol, request) {
                     swaggerBehavior = require('./behaviors'),
                     swaggerImposter = swaggerBehavior.imposterbodyExport;
 
-                if ((Object.keys(test[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(test[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
-
+                if ((test !== undefined) && (Object.keys(test[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(test[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
+                    
                     result.stubs = swaggerImposter.stubs;
                     var imposter = require('request');
                     var mountebank = require('../mountebank');
@@ -120,7 +120,7 @@ function create (Protocol, request) {
                     });
 
                     imposter.post({
-                        url: 'http://localhost:2525/imposters',
+                        url: 'http://localhost:' + mbPort + '/imposters',
                         method: 'POST',
                         json: true,
                         body: result
