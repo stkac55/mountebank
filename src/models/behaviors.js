@@ -465,9 +465,7 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
     return responsePromise.then(function (response) {
         var Q = require('q'),
             lookupPromises = lookupArray.map(function (lookupConfig) {
-                console.log('lookup entry');
                 return lookupRow(lookupConfig, originalRequest, logger).then(function (row) {
-                    console.log('lookup entry 2');
                     replaceObjectValuesIn(response, lookupConfig.into, row, logger);
                 });
             });
@@ -600,6 +598,7 @@ function getMockValue (api, schema) {
 
             break;
     }
+
     return value;
 }
 
@@ -623,7 +622,7 @@ function valueType (api, input) {
                 value = input.enum[0];
             }
             else if (input.format === 'float' || input.format === 'double') {
-                value = '^[+-]?\d+(\.\d+)?$';
+                value = '^[+-]?\\\\d+(\\\\.\\\\d+)?$';
             }
             else {
                 value = '.+';
@@ -636,7 +635,7 @@ function valueType (api, input) {
                 value = input.default;
             }
             else {
-                value = '\\d+';
+                value = '\\\\d+';
             }
 
             break;
@@ -725,10 +724,8 @@ function getParamvalues (api, body, parameters, paths) {
     return body;
 }
 
-function createImposter (paths, methods, responses, codes, parameters, api) {
-
+function createbodyWithparams (api, parameters, paths, methods) {
     var body = '{\n      "responses": [\n        {\n          "is": {\n\t\t   "statusCode": #statusCode,\n\t\t   "headers": {#res_header},\n           "body": #res_body\n          }\n        }],\n\t  "predicates": [{\n        "matches": {\n          "path": "#path",\n\t\t  "query": {#query},\n\t\t  "headers": {#req_header},\n\t\t  "method": "#method",\n\t\t  "body": #req_body\n        }\n        }\n      ]\n    }\n    ',
-        imposterBody = '',
         bodywithParams = getParamvalues(api, body, parameters, paths),
         path;
 
@@ -739,18 +736,25 @@ function createImposter (paths, methods, responses, codes, parameters, api) {
 
     var mapObj = {
         '#path': path,
-        '#method': methods[0],
-        '#res_header': ''
+        '#method': methods[0]
     };
-    body = bodywithParams.replace(/\#path|\#method|\#res_header/gi, function (matched) {
+    body = bodywithParams.replace(/\#path|\#method/gi, function (matched) {
         return mapObj[matched];
     });
+
+    return body;
+}
+
+function createImposter (bodyWithparams, resheaders, responses, codes) {
+
+    var imposterBody = '';
+
     codes.forEach(function () {
-        imposterBody = body + ',' + imposterBody;
+        imposterBody = bodyWithparams + ',' + imposterBody;
     });
 
     responses.forEach(function (response, index) {
-        imposterBody = imposterBody.replace('#res_body', response).replace('#statusCode', codes[index]);
+        imposterBody = imposterBody.replace('#res_body', response).replace('#statusCode', codes[index]).replace('#res_header', resheaders[index]);
     });
 
     return imposterBody;
@@ -778,9 +782,11 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
                     methods = [],
                     codes = [],
                     responses = [],
+                    responseHeaders = [],
                     globalParams = [],
                     parameters = [],
-                    finalBody = [];
+                    finalBody = [],
+                    resheaders = [];
                 Object.keys(api.paths).forEach(function (path) {
                     paths.push(path);
                     Object.keys(api.paths[path]).forEach(function (method) {
@@ -814,14 +820,40 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
                                     code = 200;
                                 }
                                 codes.push(code);
+
+                                if ((responseBody[code].headers) !== undefined) {
+                                    Object.keys(responseBody[code].headers).forEach(function (resHeader) {
+                                        responseHeaders.push(resHeader);
+                                    });
+                                }
+                                else {
+                                    responseHeaders.push('');
+                                }
+                                var responseHeader = '';
+
+                                for (var j = 0; j < responseHeaders.length; j += 1) {
+                                    if (responseHeaders[j] !== '') {
+                                        responseHeader += ',"#header": "sample header"';
+                                        responseHeader = responseHeader.replace('#header', responseHeaders[j]);
+                                    }
+                                    else {
+                                        responseHeader = '';
+                                    }
+                                }
+                                resheaders.push(responseHeader.replace(',', ''));
                             });
-                            finalBody.push(createImposter(paths, methods, responses, codes, parameters, api));
+                            var bodyWithparams = createbodyWithparams(api, parameters, paths, methods);
+
+                            finalBody.push(createImposter(bodyWithparams, resheaders, responses, codes));
                             methods = [];
                             codes = [];
+                            resheaders = [];
                             parameters = [];
+                            responseHeaders = [];
                             responses = [];
                         }
                     });
+                    globalParams = [];
                     paths = [];
                 });
 
