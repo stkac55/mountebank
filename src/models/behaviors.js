@@ -864,6 +864,7 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
     }).catch(function (error) {
         module.exports.parsererror = error;
         logger.error(error);
+        return Q({});
     });
 
 }
