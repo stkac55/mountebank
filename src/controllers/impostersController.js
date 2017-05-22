@@ -185,6 +185,14 @@ function create (protocols, imposters, Imposter, logger) {
                     respondWithCreationError(response, error);
                 });
             }
+            else if ((Object.keys(request.body.stubs[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(request.body.stubs[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
+                var swaggerBehavior = require('../models/behaviors'),
+                    parserError = swaggerBehavior.parsererror;
+                delete parserError.mark;
+                delete parserError.stack;
+                respondWithValidationErrors(response, parserError);
+                return Q(false);
+            }
             else {
                 respondWithValidationErrors(response, validation.errors);
                 return Q(false);
