@@ -260,7 +260,7 @@ function create (proxy, postProcess) {
     function addNewResponse (responseConfig, request, response, stubs) {
         var stubResponse = newIsResponse(response, responseConfig.proxy.addWaitBehavior, responseConfig.proxy.addDecorateBehavior),
             responseIndex = indexOfStubToAddResponseTo(responseConfig, request, stubs);
-
+            storeRecorded();  
         stubs[responseIndex].responses.push(stubResponse);
     }
 
@@ -271,56 +271,63 @@ function create (proxy, postProcess) {
             index = responseConfig.proxy.mode === 'proxyAlways' ? stubs.length : stubIndexFor(responseConfig, stubs);
 
         stubs.splice(index, 0, newStub);
-        storeRecorded();
+              
     }
 
     function storeRecorded () {
         var request = require('request');
         var fs = require('fs');
         var mountebank = require('../mountebank');
-        var flagStatus = (mountebank.saveImpostersFlag).toString();
+        var saveFile = mountebank.saveImpostersFile;
+        var saveFileFlag = mountebank.saveImpostersFileFlag;                          
         var serverPort = (mountebank.serverPort).toString();
         var imposterStored;
-        if (flagStatus.localeCompare('true') === 0) {
+        if ((saveFileFlag) && (saveFile!==undefined)) { 
+            var makeString = saveFile.toString();
+            var getStoredFileName = makeString.split(".");
             request.get({
                 url: 'http://localhost:' + serverPort + '/imposters?replayable=true',
                 method: 'GET'
-            }, function (error, response, body) {                                   
+            },
+            function (error, response, body) {
+                if (error) {
+                    console.error(error.stack);
+                }
                 imposterStored = JSON.parse(body);
-                if ((imposterStored !==null) || (imposterStored !=="") || (imposterStored !==undefined)) { 
-                var saveBody = imposterStored.imposters;                
-                var saveArray = [];
-                var replayablePort;
-                saveBody.forEach(function (saveImposter) {
-                    replayablePort = (saveImposter.port).toString();
-                    var textFinal = fs.readFileSync('imposters_template.json', 'utf-8');
-                    if (textFinal !== '') {
-                        var parseImposter = JSON.parse(textFinal);
-                        (parseImposter.imposters).forEach(function (parse, index) {
-                            var savePort = (parse.port).toString();
-                            if (savePort === replayablePort) {
-                                (parseImposter.imposters).splice(index, 1);
-                                saveArray = parseImposter.imposters;
-                                saveArray.push(saveImposter);
-                            }
-                        });
-                        fs.writeFileSync('imposters_template.json', '{"imposters":' + JSON.stringify(saveArray) + '}');
+                if ((imposterStored !== null) || (imposterStored !== '') || (imposterStored !== undefined)) {
+                    var saveBody = imposterStored.imposters;
+                    var saveArray = [];
+                    var replayablePort;
+                    saveBody.forEach(function (saveImposter) {
+                        replayablePort = (saveImposter.port).toString();
+                        var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');
+                        if (textFinal !== '') {
+                            var parseImposter = JSON.parse(textFinal);
+                            (parseImposter.imposters).forEach(function (parse, index) {
+                                var savePort = (parse.port).toString();
+                                if (savePort === replayablePort) {
+                                    (parseImposter.imposters).splice(index, 1);
+                                    saveArray = parseImposter.imposters;
+                                    saveArray.push(saveImposter);
+                                }
+                            });
+                            fs.writeFileSync(ImposterDir+'/'+saveFile, '{"imposters":' + JSON.stringify(saveArray) + '}');
 
-                        var textFinalStored = fs.readFileSync('store_imposters.json', 'utf-8');
-                        var constructStored = '[' + textFinalStored.slice(0, -1) + ']';
-                        var parseImposterStored = JSON.parse(constructStored);
-                        parseImposterStored.forEach(function (parseStored, index) {
-                            var savePortStored = (parseStored.port).toString();
-                            if (savePortStored === replayablePort) {
-                                parseImposterStored.splice(index, 1);
-                                parseImposterStored.push(saveImposter);
-                            }
-                        });
-                        var eliminateArray = JSON.stringify(parseImposterStored);
-                        var finalArray = eliminateArray.slice(1, -1);
-                        fs.writeFileSync('store_imposters.json', finalArray + ',');
-                    }
-                });
+                            var textFinalStored = fs.readFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', 'utf-8');
+                            var constructStored = '[' + textFinalStored.slice(0, -1) + ']';
+                            var parseImposterStored = JSON.parse(constructStored);
+                            parseImposterStored.forEach(function (parseStored, index) {
+                                var savePortStored = (parseStored.port).toString();
+                                if (savePortStored === replayablePort) {
+                                    parseImposterStored.splice(index, 1);
+                                    parseImposterStored.push(saveImposter);
+                                }
+                            });
+                            var eliminateArray = JSON.stringify(parseImposterStored);
+                            var finalArray = eliminateArray.slice(1, -1);
+                            fs.writeFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', finalArray + ',');
+                        }
+                    });
                 }
             });
         }
