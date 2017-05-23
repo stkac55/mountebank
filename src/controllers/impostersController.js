@@ -116,16 +116,29 @@ function create (protocols, imposters, Imposter, logger) {
             }
         });
     }
-    function saveImposter (imposter) {
+    function saveImposter (imposter) { 
+        var fs = require('fs');           
         var mountebank = require('../mountebank');
-        var flagStatus = (mountebank.saveImpostersFlag).toString();
-        if (flagStatus.localeCompare('true') === 0) {
-            var fs = require('fs');
-            fs.appendFileSync('store_imposters.json', imposter.trim() + ',');
-            var text = fs.readFileSync('store_imposters.json', 'utf-8');
-            fs.writeFileSync('imposters_template.json', '{"imposters":[' + text.slice(0, -1) + ']}');
-            var textFinal = fs.readFileSync('imposters_template.json', 'utf-8');
-            var parseImposter = JSON.parse(textFinal);
+        var saveFile = mountebank.saveImpostersFile;
+        var saveFileFlag = mountebank.saveImpostersFileFlag;
+          if ((saveFileFlag) && (saveFile!==undefined)) {   
+                    var makeString = saveFile.toString();
+                    var getStoredFileName = makeString.split(".");
+                    var storeImposterDir = './StoreImposters';
+                    var ImposterDir = './Repository_Template';
+
+            if (!fs.existsSync(storeImposterDir)){
+                fs.mkdirSync(storeImposterDir);
+            }
+            if (!fs.existsSync(ImposterDir)){
+                fs.mkdirSync(ImposterDir);
+            }          
+                      
+            fs.appendFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', imposter.trim() + ',');            
+            var text = fs.readFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', 'utf-8');            
+            fs.writeFileSync(ImposterDir+'/'+saveFile, '{"imposters":[' + text.slice(0, -1) + ']}');            
+            var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');            
+            var parseImposter = JSON.parse(textFinal);            
             var myArray = [];
             var portCollection = [];
             (parseImposter.imposters).forEach(function (parse) {
@@ -136,9 +149,25 @@ function create (protocols, imposters, Imposter, logger) {
                     portCollection.push(savePort);
                 }
             });
-            fs.writeFileSync('imposters_template.json', '{"imposters":' + JSON.stringify(myArray) + '}');
+            fs.writeFileSync(ImposterDir+'/'+saveFile, '{"imposters":' + JSON.stringify(myArray) + '}');
         }
 
+    }
+    
+    function swaggerError (request, response) {
+        var swaggerSupport = request.body.stubs,
+            swaggerBehavior = require('../models/behaviors'),
+            swaggerImposter = swaggerBehavior.imposterbodyExport;
+        if ((Object.keys(swaggerSupport[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(swaggerSupport[0].responses[0]._behaviors).indexOf('swagger') !== -1) && (swaggerImposter === undefined)) {
+            var parserError = swaggerBehavior.parsererror;
+            delete parserError.mark;
+            delete parserError.stack;
+            var swaggerValidator = { isValid: false, errors: parserError };
+
+            if (swaggerValidator.isValid === false) {
+                respondWithCreationError(response, swaggerValidator.errors);
+            }
+        }
     }
 
     /**
@@ -156,7 +185,7 @@ function create (protocols, imposters, Imposter, logger) {
 
         return validationPromise.then(function (validation) {
             var Q = require('q');
-
+            swaggerError (request, response)
             if (validation.isValid) {
                 return Imposter.create(protocols[protocol], request.body).then(function (imposter) {
                     imposters[imposter.port] = imposter;
@@ -176,13 +205,16 @@ function create (protocols, imposters, Imposter, logger) {
         });
     }
     function deleteAllimposter (id) {
-         var mountebank = require('../mountebank');
-        var flagStatus = (mountebank.saveImpostersFlag).toString();
-        if (flagStatus.localeCompare('true') === 0) {
+        var mountebank = require('../mountebank');
+        var saveFile = mountebank.saveImpostersFile;
+        var saveFileFlag = mountebank.saveImpostersFileFlag; 
+        var makeString = saveFile.toString();
+        var getStoredFileName = makeString.split(".");
+        if ((saveFileFlag) && (saveFileFlag!==undefined))  {
         var fs = require('fs');
         var myArray = [];
         var myArrayStored = [];
-        var textFinal = fs.readFileSync('imposters_template.json', 'utf-8');
+        var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');
         if (textFinal !== '') {
             var parseImposter = JSON.parse(textFinal);
             (parseImposter.imposters).forEach(function (parse) {
@@ -192,8 +224,8 @@ function create (protocols, imposters, Imposter, logger) {
                     myArray.push(parse);
                 }
             });
-            fs.writeFileSync('imposters_template.json', '{"imposters":' + JSON.stringify(myArray) + '}');
-            var textFinalStored = fs.readFileSync('store_imposters.json', 'utf-8');
+            fs.writeFileSync(ImposterDir+'/'+saveFile, '{"imposters":' + JSON.stringify(myArray) + '}');
+            var textFinalStored = fs.readFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', 'utf-8');
             var constructStored = '[' + textFinalStored.slice(0, -1) + ']';
             var parseImposterStored = JSON.parse(constructStored);
             parseImposterStored.forEach(function (parseStored) {
@@ -205,13 +237,13 @@ function create (protocols, imposters, Imposter, logger) {
             });
             var eliminateArray = JSON.stringify(myArrayStored);
             var finalArray = eliminateArray.slice(1, -1);
-            fs.writeFileSync('store_imposters.json', finalArray.trim() + ',');
-            var textFinalStoredDeleteComma = fs.readFileSync('store_imposters.json', 'utf-8');
+            fs.writeFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', finalArray.trim() + ',');
+            var textFinalStoredDeleteComma = fs.readFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', 'utf-8');
             if (textFinalStoredDeleteComma === ',') {
                 textFinalStoredDeleteComma.replace(/^,/, '');
-                fs.writeFileSync('store_imposters.json', '');
+                fs.writeFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', '');
+                }
             }
-        }
         }
     }
     /**
@@ -246,7 +278,7 @@ function create (protocols, imposters, Imposter, logger) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing purposes
      */
-    function put (request, response) {
+    function put (request, response) {        
         var Q = require('q'),
             requestImposters = request.body.imposters || [],
             validationPromises = requestImposters.map(function (imposter) {
@@ -255,28 +287,37 @@ function create (protocols, imposters, Imposter, logger) {
 
         logger.debug(requestDetails(request));
 
-        return Q.all(validationPromises).then(function (validations) {
-            var isValid = validations.every(function (validation) {
+        return Q.all(validationPromises).then(function (validations) {                    
+            var isValid = validations.every(function (validation) {                
                 return validation.isValid;
-            });
-
+            });             
             if (isValid) {
                 return deleteAllImposters().then(function () {
-                    var creationPromises = request.body.imposters.map(function (imposter) {
-                        var storePutImposters = JSON.stringify(imposter);
+                     
+                     if (request.body.imposters===undefined) {
+                        var makeArray =[request.body]   
+                        var makeImpostersArray ='{"imposters":' + JSON.stringify(makeArray) + '}' 
+                        var makeParse = JSON.parse (makeImpostersArray);                            
+                     }
+                     else if(request.body.imposters!==undefined) {
+                        var makeParse = request.body
+                     }                    
+                    var creationPromises = makeParse.imposters.map(function (imposter) {
+                        var storePutImposters = JSON.stringify(imposter);                        
                         saveImposter(storePutImposters);
+
                         return Imposter.create(protocols[imposter.protocol], imposter);
-                    });
+                    });                                        
                     return Q.all(creationPromises);
-                }).then(function (allImposters) {
-                    var json = allImposters.map(function (imposter) {
+                }).then(function (allImposters) {                    
+                    var json = allImposters.map(function (imposter) {                        
                         return imposter.toJSON({ list: true });
                     });
-                    allImposters.forEach(function (imposter) {
+                    allImposters.forEach(function (imposter) {                        
                         imposters[imposter.port] = imposter;
-                    });
+                    });                    
                     response.send({ imposters: json });
-                }, function (error) {
+                }, function (error) {                    
                     respondWithCreationError(response, error);
                 });
             }
