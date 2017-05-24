@@ -815,11 +815,7 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
                                     var parsedResponse = JSON.stringify(getMockValue(api, responseBody[code].schema), null, '\t');
                                     responses.push(JSON.stringify(parsedResponse));
                                 }
-                                else { responses.push('""'); }
-                                if (code === 'default') {
-                                    code = 200;
-                                }
-                                codes.push(code);
+                                else { responses.push('""'); }                               
 
                                 if ((responseBody[code].headers) !== undefined) {
                                     Object.keys(responseBody[code].headers).forEach(function (resHeader) {
@@ -829,6 +825,12 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
                                 else {
                                     responseHeaders.push('');
                                 }
+                                
+                                if (code === 'default') {
+                                    code = 200;
+                                }
+                                codes.push(code);
+                                
                                 var responseHeader = '';
 
                                 for (var j = 0; j < responseHeaders.length; j += 1) {
