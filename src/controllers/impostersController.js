@@ -214,6 +214,8 @@ function create (protocols, imposters, Imposter, logger) {
         var fs = require('fs');
         var myArray = [];
         var myArrayStored = [];
+        var storeImposterDir = './StoreImposters';
+                    var ImposterDir = './Repository_Template';
         var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');
         if (textFinal !== '') {
             var parseImposter = JSON.parse(textFinal);
@@ -278,46 +280,36 @@ function create (protocols, imposters, Imposter, logger) {
      * @param {Object} response - the HTTP response
      * @returns {Object} A promise for testing purposes
      */
-    function put (request, response) {        
+    function put (request, response) {
         var Q = require('q'),
             requestImposters = request.body.imposters || [],
             validationPromises = requestImposters.map(function (imposter) {
                 return validate(imposter, logger);
             });
-
-        logger.debug(requestDetails(request));
-
-        return Q.all(validationPromises).then(function (validations) {                    
-            var isValid = validations.every(function (validation) {                
+        logger.debug(requestDetails(request));        
+        if (request.body.imposters!==undefined) {
+        return Q.all(validationPromises).then(function (validations) {
+            var isValid = validations.every(function (validation) {
                 return validation.isValid;
-            });             
+            });
+
             if (isValid) {
                 return deleteAllImposters().then(function () {
-                     
-                     if (request.body.imposters===undefined) {
-                        var makeArray =[request.body]   
-                        var makeImpostersArray ='{"imposters":' + JSON.stringify(makeArray) + '}' 
-                        var makeParse = JSON.parse (makeImpostersArray);                            
-                     }
-                     else if(request.body.imposters!==undefined) {
-                        var makeParse = request.body
-                     }                    
-                    var creationPromises = makeParse.imposters.map(function (imposter) {
-                        var storePutImposters = JSON.stringify(imposter);                        
+                    var creationPromises = request.body.imposters.map(function (imposter) {
+                        var storePutImposters = JSON.stringify(imposter);                                               
                         saveImposter(storePutImposters);
-
                         return Imposter.create(protocols[imposter.protocol], imposter);
-                    });                                        
+                    });
                     return Q.all(creationPromises);
-                }).then(function (allImposters) {                    
-                    var json = allImposters.map(function (imposter) {                        
+                }).then(function (allImposters) {
+                    var json = allImposters.map(function (imposter) {
                         return imposter.toJSON({ list: true });
                     });
-                    allImposters.forEach(function (imposter) {                        
+                    allImposters.forEach(function (imposter) {
                         imposters[imposter.port] = imposter;
-                    });                    
+                    });
                     response.send({ imposters: json });
-                }, function (error) {                    
+                }, function (error) {
                     respondWithCreationError(response, error);
                 });
             }
@@ -330,6 +322,10 @@ function create (protocols, imposters, Imposter, logger) {
                 return Q(false);
             }
         });
+        }
+        else if(request.body.imposters===undefined) {
+            post(request, response)
+        }
     }
 
     return {
