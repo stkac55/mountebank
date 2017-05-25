@@ -260,7 +260,7 @@ function create (proxy, postProcess) {
     function addNewResponse (responseConfig, request, response, stubs) {
         var stubResponse = newIsResponse(response, responseConfig.proxy.addWaitBehavior, responseConfig.proxy.addDecorateBehavior),
             responseIndex = indexOfStubToAddResponseTo(responseConfig, request, stubs);
-            storeRecorded();  
+            storeRecorded();
         stubs[responseIndex].responses.push(stubResponse);
     }
 
@@ -270,8 +270,8 @@ function create (proxy, postProcess) {
             newStub = { predicates: predicates, responses: [stubResponse] },
             index = responseConfig.proxy.mode === 'proxyAlways' ? stubs.length : stubIndexFor(responseConfig, stubs);
 
-        stubs.splice(index, 0, newStub);
-              
+           stubs.splice(index, 0, newStub);
+           storeRecorded();      
     }
 
     function storeRecorded () {
@@ -298,6 +298,8 @@ function create (proxy, postProcess) {
                     var saveBody = imposterStored.imposters;
                     var saveArray = [];
                     var replayablePort;
+                    var storeImposterDir = './StoreImposters';
+                    var ImposterDir = './Repository_Template';
                     saveBody.forEach(function (saveImposter) {
                         replayablePort = (saveImposter.port).toString();
                         var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');
