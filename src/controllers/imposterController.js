@@ -56,6 +56,14 @@ function create (imposters) {
             var fs = require('fs');
             var saveArray;
             var resultPort = (saveImposter.port).toString();
+            var storeImposterDir = './StoreImposters';
+            var ImposterDir = './Repository_Template';
+             /*if (!fs.existsSync(storeImposterDir)){
+                fs.mkdirSync(storeImposterDir);
+            }
+            if (!fs.existsSync(ImposterDir)){
+                fs.mkdirSync(ImposterDir);
+            }  */                       
             var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');
             if (textFinal !== '') {
                 var parseImposter = JSON.parse(textFinal);
