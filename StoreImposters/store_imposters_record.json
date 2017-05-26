@@ -1,0 +1,1 @@
+{"protocol":"http","port":8888,"stubs":[{"responses":[{"is":{"body":"This took at least half a second to send"},"_behaviors":{"wait":500}}]}]},{"protocol":"http","port":9999,"stubs":[{"responses":[{"is":{"body":"This took at least half a second to send"},"_behaviors":{"wait":500}}]}]},

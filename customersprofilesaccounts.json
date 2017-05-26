@@ -1,0 +1,232 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Customers Profiles Accounts",
+        "description": "The **Gifts** collection contains instances that represent the gifts that are offered by a specific bank. \nGifts are offered when a customer...\n\n* Opens a new account.\n* Upgrades an existing account.\n* Threatens to close an account.\n\nAutomated integration tests can add gifts and then use the GET API to check that it was successfully added.  \nA valid bankReferenceId is required to successfully add each gift.\n",
+        "version": "1.0",
+        "contact": {
+            "name": "DoNotUseContactInfo",
+            "email": "DoNotUseContactInfo@nowhere.com"
+        },
+        "license": {
+            "name": "Capital One Proprietary",
+            "url": "http://www.capitalone.com/license_path"
+        }
+    },
+    "schemes": [
+        "https"
+    ],
+    "consumes": [
+        "application/xml",
+        "application/json"
+    ],
+    "produces": [
+        "application/xml",
+        "application/json"
+    ],
+    "tags": [
+        {
+            "name": "DoNotUseTags"
+        }
+    ],
+    "host": "dev.null",
+    "paths": {
+        "/banks/{bankReferenceId}/gifts/test50": {
+            "parameters": [
+                {
+                    "name": "bankReferenceId",
+                    "in": "path",
+                    "description": "A token that uniquely identifies a Bank instance. To obtain a bankReferenceId, use the *Search for Banks* API (`GET /banks`). It must be single URL encoded.",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "User-Id",
+                    "in": "header",
+                    "description": "A token that identifies the end user.",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "post": {
+                "summary": "Create a New Gift",
+                "description": "Creates a new gift (or \"gift type\") and adds it to the catalog of gifts that this bank offers to customers.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GiftInstance"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "A new Bank Gift resource was successfully created.",
+                        "schema": {
+                            "$ref": "#/definitions/CreateGiftResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The resource identified by the URL doesn't exist.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "get": {
+                "summary": "Retrieve a Bank's Catalog of Gifts",
+                "description": "Retrieves a list of the gifts that this bank offers to customers.",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "type": "string",
+                        "description": "A comma-separated list of gift categories that you're interested in, one or more of \nMerchandise, Service, GiftCard, and Other. If the `category` query parameter is excluded,\nall categories are considered.\n"
+                    },
+                    {
+                        "name": "minMonetaryValue",
+                        "in": "query",
+                        "required": false,
+                        "default": 0,
+                        "type": "integer",
+                        "description": "The minimum monetary value of the gifts that are returned in the response. \n"
+                    },
+                    {
+                        "name": "maxMonetaryValue",
+                        "in": "query",
+                        "required": false,
+                        "default": 1000000,
+                        "type": "integer",
+                        "description": "The maximum monetary value of the gifts that are returned in the response.\n"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The Bank Gift resource was successfully created.",
+                        "schema": {
+                            "$ref": "#/definitions/RetrieveGiftsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 104 | The value of the `category` query parameter is unrecognized. |\n| 105 | The value of the `minMonetaryValue` query parameter is greater than `maxMonetaryValue`. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The resource identified by the URL doesn't exist.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "GiftInstance": {
+            "required": [
+                "name",
+                "description",
+                "monetaryValue"
+            ],
+            "properties": {
+                "giftReferenceId": {
+                    "description": "A token that identifies the newly-created gift resource.",
+                    "type": "string",
+                    "readOnly": true
+                },
+                "name": {
+                    "description": "A customer-friendly name for the gift.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "A customer-friendly, plaintext description of the gift.",
+                    "type": "string"
+                },
+                "moreInfoUrl": {
+                    "description": "The URL of a page that provides more information about the gift.",
+                    "type": "string",
+                    "format": "url"
+                },
+                "category": {
+                    "description": "All gifts fall into one of four categories:\n* `Merchandise`. Physical objects such as toasters and calendars.\n* `Service`. A service such as a car wash or tax consultation.\n* `GiftCard`. A gift card with a stated monetary value that can be redeemed at a specific vendor.\n* `Other`. Anything that doesn't fit into the other categories. \n",
+                    "type": "string",
+                    "enum": [
+                        "Merchandise",
+                        "Service",
+                        "GiftCard",
+                        "Other"
+                    ]
+                },
+                "monetaryValue": {
+                    "description": "An approximation of the monetary value of the gift in whole dollars. This is used for grouping gifts into\nvalue ranges; it needn't be exact. The value may be 0; it may be no greater than 1000.\n",
+                    "type": "integer"
+                }
+            }
+        },
+        "CreateGiftResponse": {
+            "properties": {
+                "giftReferenceId": {
+                    "description": "A token that identifies the newly-created gift resource.",
+                    "type": "string"
+                }
+            }
+        },
+        "RetrieveGiftsResponse": {
+            "required": [
+                "entries"
+            ],
+            "properties": {
+                "entries": {
+                    "description": "An array that contains the gift objects that fulfill the search criteria.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/GiftInstance"
+                    }
+                }
+            }
+        },
+        "ErrorResponse": {
+            "description": "Standard error response structure for internal APIs.",
+            "properties": {
+                "id": {
+                    "description": "Error code that identifies the type of error that was encountered.",
+                    "type": "integer"
+                },
+                "developerText": {
+                    "description": "Error message that's meant to be used during development and debugging.",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

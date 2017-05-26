@@ -292,7 +292,7 @@ function create (proxy, postProcess) {
             function (error, response, body) {
                 if (error) {
                     console.error(error.stack);
-                }
+                }         
                 imposterStored = JSON.parse(body);
                 if ((imposterStored !== null) || (imposterStored !== '') || (imposterStored !== undefined)) {
                     var saveBody = imposterStored.imposters;

@@ -102,11 +102,11 @@ function create (Protocol, request) {
                     removeProxiesFrom(result);
                 }
 
-                var test = result.stubs,
+               /* var test = result.stubs,
                     swaggerBehavior = require('./behaviors'),
-                    swaggerImposter = swaggerBehavior.imposterbodyExport;
+                    swaggerImposter = swaggerBehavior.imposterbodyExport;*/
 
-                if ((Object.keys(test[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(test[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
+               /* if ((test !== undefined) && (Object.keys(test[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(test[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
 
                     result.stubs = swaggerImposter.stubs;
                     var imposter = require('request');
@@ -127,7 +127,7 @@ function create (Protocol, request) {
                     }, function () {
 
                     });
-                }
+                }*/
 
                 return result;
 

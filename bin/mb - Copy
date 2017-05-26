@@ -149,9 +149,38 @@ function loadConfig (options, server) {
     return putConfig(options, JSON.stringify({ imposters: imposters }));
 }
 
+
+   function portStored (saveFile, saveImposterStatus) {
+    console.log("123456--> "+saveFile);
+    console.log("123456--> "+saveImposterStatus);
+        var fs = require('fs');
+        var portStore = [];
+         //var mb = require('../bin/mb');
+        //var saveFile = mb.saveImpostersFile;
+        //console.log("fs.existsSync(saveFile) "+fs.existsSync(saveFile));
+         //console.log("fs.existsSync(saveFile) "+fs.existsSync(saveFile));
+        if (fs.existsSync(saveFile) === true) {
+            var textFinal = fs.readFileSync(saveFile, 'utf-8');
+                console.log("check the content--> "+JSON.stringify(saveImposterStatus));
+            if ((saveImposterStatus === true) && (textFinal !== '')) {
+                console.log("check the11111111 content--> ");
+                var parseImposter = JSON.parse(textFinal);
+                (parseImposter.imposters).forEach(function (parse) {
+                    console.log("check the content--> "+JSON.stringify(parse));
+                    portStore.push(parse.port);
+                });
+                if (portStore.length >= 1) {
+                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check "imposters_template.json" for stored imposter collections');
+                }
+            }
+        }
+    else { fs.writeFileSync(saveFile, '') }
+    }
+
 function serverAt (options) {
 
     function start () {
+        console.log("entered") 
         mountebank.create(options).then(function (server) {
             var shutdown = function shutdown () {
                 server.close(function () {
@@ -173,7 +202,36 @@ function serverAt (options) {
         }).then(function () {
             // Useful for build plugins that need to wait for mb to be fully initialized
             // They can wait for the pidfile to be written
-            fs.writeFileSync(options.pidfile, process.pid.toString());
+            fs.writeFileSync(options.pidfile, process.pid.toString());           
+            
+            if ((options.savefile===true) && (options.savefile!==undefined)){
+                    console.log("entered 1st loop")
+                    var saveImpostersFile;
+                    saveImpostersFile = "mb.json";
+                    module.exports.saveImpostersFile = saveImpostersFile;
+
+                    var saveImpostersFileFlag;
+                    saveImpostersFileFlag ="true"
+                    module.exports.saveImpostersFileFlag = saveImpostersFileFlag;
+
+                    portStored (saveImpostersFile, saveImpostersFileFlag)
+
+            }
+            else if ((options.savefile !==true) && (options.savefile!==undefined)) {
+               console.log("entered 2nd loop")
+                var saveImpostersFile;
+                    saveImpostersFile = options.savefile;
+                    module.exports.saveImpostersFile = saveImpostersFile;
+                    module.exports.saveImpostersFileFlag = "true";
+                    portStored (saveImpostersFile, saveImpostersFileFlag)
+            }
+            else if ((options.savefile===undefined)) {
+                console.log("entered 3rd loop")
+                var saveImpostersFile;
+                    saveImpostersFile = "false";
+                    module.exports.saveImpostersFile = saveImpostersFile;
+            }
+
         }).done();
     }
 
@@ -323,13 +381,13 @@ var aliases = {
             alias: aliases.i,
             global: false
         },
-       /* saveImposters: {
+        saveImposters: {
             default: false,
             description: 'set to allow save imposters ',
             type: 'boolean',
             alias: aliases.si,
             global: false
-        },*/
+        },
         localOnly: {
             default: false,
             description: 'allow connections only from localhost',

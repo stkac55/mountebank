@@ -148,49 +148,28 @@ function create (options) {
         });
     });
 
-    function portStored (saveImpostersFile, saveImpostersFileFlag) {
+/*    function portStored (saveImposterStatus) {
         var fs = require('fs');
-        var portStore = [];  
-        var ImposterDir = './Repository_Template';      
-        if (fs.existsSync(ImposterDir+'/'+saveImpostersFile) === true) {
-            var textFinal = fs.readFileSync(ImposterDir+'/'+saveImpostersFile, 'utf-8');            
-            if ((saveImpostersFileFlag) && (textFinal !== '')) {                
+        var portStore = [];
+         var mb = require('../bin/mb');
+        var saveFile = mb.saveImpostersFile;
+       
+
+        if (fs.existsSync(saveFile) === true) {
+            var textFinal = fs.readFileSync(saveFile, 'utf-8');
+            if ((saveImposterStatus === true) && (textFinal !== '')) {
                 var parseImposter = JSON.parse(textFinal);
-                (parseImposter.imposters).forEach(function (parse) {                    
+                (parseImposter.imposters).forEach(function (parse) {
                     portStore.push(parse.port);
                 });
                 if (portStore.length >= 1) {
-                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check ' +ImposterDir+'/'+saveImpostersFile+ ' for stored imposter collections');
+                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check "imposters_template.json" for stored imposter collections');
                 }
             }
         }
-        else { fs.writeFileSync(saveImpostersFile, ''); }
+        //else { fs.writeFileSync(saveFile, '') }
     }
-
-    function saveImposterFile (savefile) {
-
-     if ((options.savefile===true) && (options.savefile!==undefined) ){                    
-                    var saveImpostersFile="mb.json";                    
-                    module.exports.saveImpostersFile = saveImpostersFile;                   
-                    
-                    var saveImpostersFileFlag="true";
-                    module.exports.saveImpostersFileFlag = saveImpostersFileFlag;
-                    portStored (saveImpostersFile, saveImpostersFileFlag);
-                }    
-
-            else if ((options.savefile).localeCompare('mb.json') === 0) {                            
-                    module.exports.saveImpostersFileFlag = "false";                    
-                }
-
-            else if ((options.savefile !==true) && (options.savefile!==undefined)) {               
-                var saveImpostersFile=options.savefile;                    
-                    module.exports.saveImpostersFile = saveImpostersFile;
-                    var saveImpostersFileFlag = "true"
-                    module.exports.saveImpostersFileFlag = saveImpostersFileFlag; 
-                    portStored(saveImpostersFile, saveImpostersFileFlag);                  
-                }
-            }
-
+*/
     function isAllowedConnection (ipAddress) {
         return allowedIPs.some(function (allowedIP) {
             return allowedIP === '*' || allowedIP.toLowerCase() === ipAddress.toLowerCase();
@@ -203,12 +182,17 @@ function create (options) {
             logger.info('mountebank v%s now taking orders - point your browser to http://localhost:%s for help',
                 thisPackage.version, options.port);
 
+
+            var saveImpostersFlag;
+            saveImpostersFlag = JSON.stringify(options.savefile);
+            console.log("save Imposters "+saveImpostersFlag)
+            module.exports.saveImpostersFlag = saveImpostersFlag;
+
+           // portStored(options.saveImposters);
+            
             var serverPort;
             serverPort = JSON.stringify(options.port);
-            module.exports.serverPort = serverPort; 
-
-            saveImposterFile(options.savefile);
-
+            module.exports.serverPort = serverPort;
             logger.debug('config: ' + JSON.stringify({
                 options: options,
                 process: {

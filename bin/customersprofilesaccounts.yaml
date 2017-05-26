@@ -1,0 +1,316 @@
+#####
+# Capital One Confidential & Proprietary 
+#
+# Example YAML file that provides the Open API definition of a single resource and two operations (POST and GET).
+# If you're new to YAML, see "YAML Tips and Examples", https://pulse.kdc.capitalone.com/docs/DOC-136455.
+# For the full Open API (aka Swagger) 2.0 spec, see https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md.
+#
+# Throughout your API definition, make sure you explain if an element's value must be encoded or encrypted (e.g. URL or Base64).
+#
+# For more information about designing and submitting an API, go to the 
+# "API Center of Excellence" (https://pulse.kdc.capitalone.com/groups/api-center-of-excellence)
+#
+#####
+
+# Specifies the version of the Open API specification that this file conforms to.
+# Leave the value as it is ("2.0").
+swagger: "2.0"
+
+info:
+
+  # The name of the API as it will be displayed in the API Dashboard.
+  # IMPORTANT: To change the name of your API, you must change the value of the 'title' field here AND
+  # go to the Lifecycle Tool dashboard, select 'Select Action > Edit Planning Info', and change the value of the
+  # 'API Name' field.
+  title: Customers Profiles Accounts
+
+  # A description of the API. 
+  # All 'description: These suite of APIs will provide the ability to maintain relationship between customers online (Digital) profile and accounts.
+  # For multi-line descriptions, put a '|' character on the first line and indent the subsequent lines.
+  # If you want to use the 'rich documentation' feature, which makes the creation and maintenance of documentation much easier, see:
+  #  https://github.kdc.capitalone.com/API-Lifecycle/Interface-Design-Template/blob/master/documentation/RichDocumentation_template.md 
+  #
+  # IMPORTANT: You can't create "atx" (pound sign) headings in a YAML file. For example, this doesn't work:
+  #
+  #  ## This is a second level heading
+  #
+  # To create headings in your documentation, you should use the rich documentation feature.
+  #
+  # In addition to describing what this API does and how it works, you should explain how consumers 
+  # can write automated integration tests against this API. For more info about integration testing, 
+  # see https://github.kdc.capitalone.com/pages/API-Lifecycle/standards/utilities/dxChecklist.html.
+  #
+
+  description: |
+    The **Gifts** collection contains instances that represent the gifts that are offered by a specific bank. 
+    Gifts are offered when a customer...
+    
+    * Opens a new account.
+    * Upgrades an existing account.
+    * Threatens to close an account.
+    
+    Automated integration tests can add gifts and then use the GET API to check that it was successfully added.  
+    A valid bankReferenceId is required to successfully add each gift.
+
+  # The version of your API, expressed as "major.minor". 
+  # IMPORTANT: You can't change the version by editing the YAML file. To create a new version of the API,
+  # go to the Lifecycle Tool dashboard and select 'Select Action > Create New Version'. 
+  version: "1.0"
+  
+  # Contact info for your API.
+  # IMPORTANT: You can't change the contact information by editing the YAML file. To change this info,
+  # go to the Lifecycle Tool dashboard, select 'Select Action > Edit Planning Info', and change the value
+  # of the 'API Team' field.
+  contact:
+    name: "DoNotUseContactInfo"
+    email: "DoNotUseContactInfo@nowhere.com"
+    
+  # Leave the 'license:' block as it is.  
+  license:
+    name: Capital One Proprietary
+    url: http://www.capitalone.com/license_path
+
+# Leave the 'schemes:' array as it is.
+schemes:
+  - https
+  
+consumes:
+  - application/xml
+  - application/json
+
+produces:
+  - application/xml
+  - application/json
+
+# IMPORTANT: You can't add or remove tags by editing the tags: array in the YAML file. To modify your list of tags, 
+# go to the Lifecycle Tool dashboard and select 'Select Action > API Tags and Metadata'.
+tags: 
+  - name: "DoNotUseTags"
+
+# Here's the host: field, which we only mention in order to point out that it isn't used. 
+# When you register your API's endpoints, you'll be asked to specify the host (or hosts) that
+# will serve those endpoints. Each endpoint can be served by a different host.
+host: "dev.null"
+
+# 'paths:' contains a list of the resources, identified by URL, that comprise the API. 
+# This YAML file defines a single resource: /banks/{bankReferenceId}/gifts.  
+paths:
+  /banks/{bankReferenceId}/gifts/test50:
+  
+    # The 'parameters:' section at the resource level (i.e., directly under a path) is an array of 
+    # request elements (headers, path parameters, and so on) that will be applied to all of this resource's
+    # operations. We'll add operation-specific parameters later.
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL. 
+      - name: bankReferenceId
+        in: path
+        description: A token that uniquely identifies a Bank instance. To obtain a bankReferenceId, use the *Search for Banks* API (`GET /banks`). It must be single URL encoded.
+        required: true
+        type: string
+      # And here's a header declaration.
+      - name: User-Id
+        in: header
+        description: A token that identifies the end user.  
+        required: true
+        type: string
+    
+    # Next come the operations, identified by HTTP method, that this resource supports. Note that the HTTP method names
+    # must be lower case ('post', not 'POST'). This resource has two HTTP methods, 'post' and 'get'.
+    post:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Create a New Gift
+      description: Creates a new gift (or "gift type") and adds it to the catalog of gifts that this bank offers to customers.
+
+      # As mentioned above, the operation will contain the path parameter and header that were declared
+      # at the resource level. Here, at the operation level, we add the request parameters that only
+      # apply to this specific operation. In this case, we add a request body.
+      parameters:
+        # The structure of the body message is defined in the 'definitions:' dictionary later in this file.
+        - in: body
+          name: body
+          required: true
+          schema: 
+            $ref: '#/definitions/GiftInstance'
+            
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        201:
+          description: A new Bank Gift resource was successfully created.
+          schema:
+            $ref: '#/definitions/CreateGiftResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          # In the description of the http status, you should list and describe the error codes
+          # that could be returned in the `id` property of the standard error structure. For
+          # internal APIs, you can create your own error code values -- they needn't be unique across
+          # *all* APIs. To avoid colliding with codes that are created by the framework and
+          # gateway, don't use six-digit codes.
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        # For http status codes that are unambiguous with regard to the
+        # cause of the error, you can exclude the error code table. 
+        404:
+          description: The resource identified by the URL doesn't exist.
+          schema:
+            $ref: '#/definitions/ErrorResponse'   
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'       
+
+    get:
+      summary: Retrieve a Bank's Catalog of Gifts
+      description: Retrieves a list of the gifts that this bank offers to customers. 
+
+      # We'll add some query parameters to the 'get gift catalog' operation. 
+      parameters:
+        - name: category
+          in: query
+          required: false
+          type: string
+          description: |
+            A comma-separated list of gift categories that you're interested in, one or more of 
+            Merchandise, Service, GiftCard, and Other. If the `category` query parameter is excluded,
+            all categories are considered.
+
+        - name: minMonetaryValue
+          in: query
+          required: false
+          default: 0
+          type: integer
+          description: |
+            The minimum monetary value of the gifts that are returned in the response. 
+
+        - name: maxMonetaryValue
+          in: query
+          required: false
+          default: 1000000
+          type: integer
+          description: |
+            The maximum monetary value of the gifts that are returned in the response.
+
+      responses:
+        200:
+          description: The Bank Gift resource was successfully created.
+          schema:
+            $ref: '#/definitions/RetrieveGiftsResponse'
+  
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 104 | The value of the `category` query parameter is unrecognized. |
+            | 105 | The value of the `minMonetaryValue` query parameter is greater than `maxMonetaryValue`. |
+            
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        404:
+          description: The resource identified by the URL doesn't exist.
+          schema:
+            $ref: '#/definitions/ErrorResponse'   
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'                     
+
+# The definitions: block defines the JSON structures that you use in your request and response bodies.
+definitions:
+
+  # GiftInstance is used as the request body for the 'create a gift' operation (POST) AND as the 
+  # definition of the objects that are returned in the 'get gift catalog' array (GET). However, there's a
+  # difference between the two structures: The POST request doesn't contain a 'giftReferenceId', but
+  # the GET response does. To accommodate this difference we mark 'giftReferenceId' as read only. 
+  # This will cause the property to be omitted from the documentation and from the code that's generated from the YAML. 
+  # Note: The swagger editor doesn't recognize the 'readOnly:' field, so it will still appear in the
+  # right side view.
+  GiftInstance:
+    required: 
+      - name
+      - description
+      - monetaryValue
+    properties:
+      giftReferenceId:
+        description: A token that identifies the newly-created gift resource.
+        type: string
+        readOnly: true
+      name:
+        description: A customer-friendly name for the gift.
+        type: string        
+      description:
+        description: A customer-friendly, plaintext description of the gift.
+        type: string
+      moreInfoUrl:
+        description: The URL of a page that provides more information about the gift.
+        type: string
+        format: url
+      category:
+        description: |
+          All gifts fall into one of four categories:
+          * `Merchandise`. Physical objects such as toasters and calendars.
+          * `Service`. A service such as a car wash or tax consultation.
+          * `GiftCard`. A gift card with a stated monetary value that can be redeemed at a specific vendor.
+          * `Other`. Anything that doesn't fit into the other categories. 
+        type: string
+        enum:
+          - Merchandise
+          - Service
+          - GiftCard
+          - Other
+      monetaryValue:
+        description: |
+          An approximation of the monetary value of the gift in whole dollars. This is used for grouping gifts into
+          value ranges; it needn't be exact. The value may be 0; it may be no greater than 1000.
+        type: integer
+
+  # The response body of the 'create a gift' operation.
+  CreateGiftResponse:
+    properties:
+      giftReferenceId:
+        description: A token that identifies the newly-created gift resource.
+        type: string
+
+  # The RetrieveGiftsResponse, which is used as the response body for the 'get all gifts' operation, contains
+  # a single top-level array named 'entries'. When you declare a property to be an array, you must 
+  # supply an 'items:' field that describes the type of data the array contains (all elements in the array
+  # must be the same type). Here, we declare that the array contains a set of GiftInstance objects.
+  RetrieveGiftsResponse:
+    required:
+      - entries
+    properties:
+      entries:
+        description: An array that contains the gift objects that fulfill the search criteria.
+        type: array
+        items:
+          $ref: '#/definitions/GiftInstance'
+
+  ErrorResponse:
+    description: Standard error response structure for internal APIs.
+    properties:
+      id:
+        description: Error code that identifies the type of error that was encountered.
+        type: integer
+      developerText:
+        description: Error message that's meant to be used during development and debugging.
+        type: string
