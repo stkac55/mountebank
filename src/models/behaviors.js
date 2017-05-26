@@ -818,58 +818,6 @@ function swagger (originalRequest, responsePromise, swaggerFile, logger) {
                                 else { responses.push('""'); }                               
 
                                 if ((responseBody[code].headers) !== undefined) {
-                                    Object.keys(responseBody[code].headers).forEach(function (resHeader) {
-                                        responseHeaders.push(resHeader);
-                                    });
-                                }
-                                else {
-                                    responseHeaders.push('');
-                                }
-                                
-                                if (code === 'default') {
-                                    code = 200;
-                                }
-                                codes.push(code);
-                                
-                                var responseHeader = '';
-
-                                for (var j = 0; j < responseHeaders.length; j += 1) {
-                                    if (responseHeaders[j] !== '') {
-                                        responseHeader += ',"#header": "sample header"';
-                                        responseHeader = responseHeader.replace('#header', responseHeaders[j]);
-                                    }
-                                    else {
-                                        responseHeader = '';
-                                    }
-                                }
-                                resheaders.push(responseHeader.replace(',', ''));
-                            });
-                            var bodyWithparams = createbodyWithparams(api, parameters, paths, methods);
-
-                            finalBody.push(createImposter(bodyWithparams, resheaders, responses, codes));
-                            methods = [];
-                            codes = [];
-                            resheaders = [];
-                            parameters = [];
-                            responseHeaders = [];
-                            responses = [];
-                        }
-                    });
-                    globalParams = [];
-                    paths = [];
-                });
-
-                finalImposter(api, finalBody);
-                return response;
-            });
-        return Q.all(swaggerPromises).then(function () { return Q(response); });
-    }).catch(function (error) {
-        module.exports.parsererror = error;
-        logger.error(error);
-        return Q({});
-    });
-
-}
 
 
 // Array Handling main functions xpathArrayvalues, arrayHandling, arrayCopy
