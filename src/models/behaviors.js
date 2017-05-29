@@ -550,9 +550,6 @@ function execute (request, response, behaviors, logger) {
         lookupFn = behaviors.lookup ?
             function (result) { return lookup(request, result, behaviors.lookup, logger); } :
             combinators.identity,
-        swaggerFn = behaviors.swagger ?
-            function (result) { return swagger(request, result, behaviors.swagger, logger); } :
-            combinators.identity,
         arrayHandlingFn = behaviors.arrayHandling ?
             function (result) { return arrayHandling(request, result, behaviors.arrayHandling, logger); } :
             combinators.identity,
@@ -565,7 +562,7 @@ function execute (request, response, behaviors, logger) {
 
     logger.debug('using stub response behavior ' + JSON.stringify(behaviors));
 
-    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, swaggerFn, arrayHandlingFn, waitFn, Q)(response);
+    return combinators.compose(decorateFn, shellTransformFn, copyFn, lookupFn, arrayHandlingFn, waitFn, Q)(response);
 }
 
 module.exports = {
