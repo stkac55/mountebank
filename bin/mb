@@ -227,7 +227,14 @@ function serverAt (options) {
     function swagger () {
         var swaggerparser = require ('../src/util/swagger.js');
         getConfig(options).then(function (response) {
+			  var filename = options.swaggerfile;
+			  var ext = filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+				if( (ext === 'json') || (ext === 'yml') || (ext === 'yaml')){
             swaggerparser.swagger(options.swaggerfile, options.imposterport, options.port);
+			}
+			else{
+			console.error("Error: Please input valid swagger file");
+			}
         }).catch(function (err) {
             if (err.code === 'ECONNREFUSED') {
                 console.error('No mb process running on port ' + options.port);
