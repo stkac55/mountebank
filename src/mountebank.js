@@ -164,11 +164,15 @@ function create (options) {
                 }
             }
         }
-        else { fs.writeFileSync(saveImpostersFile, ''); }
+        else { 
+            
+            if (!fs.existsSync(ImposterDir)){
+                fs.mkdirSync(ImposterDir);
+            }
+            fs.writeFileSync(ImposterDir+'/'+saveImpostersFile, ''); }
     }
 
     function saveImposterFile (savefile) {
-
      if ((options.savefile===true) && (options.savefile!==undefined) ){                    
                     var saveImpostersFile="mb.json";                    
                     module.exports.saveImpostersFile = saveImpostersFile;                   
@@ -178,11 +182,11 @@ function create (options) {
                     portStored (saveImpostersFile, saveImpostersFileFlag);
                 }    
 
-            else if ((options.savefile).localeCompare('mb.json') === 0) {                            
+            else if ((options.savefile).localeCompare('mb.json') === 0) {                                     
                     module.exports.saveImpostersFileFlag = "false";                    
                 }
 
-            else if ((options.savefile !==true) && (options.savefile!==undefined)) {               
+            else if ((options.savefile !==true) && (options.savefile!==undefined)) {                             
                 var saveImpostersFile=options.savefile;                    
                     module.exports.saveImpostersFile = saveImpostersFile;
                     var saveImpostersFileFlag = "true"
