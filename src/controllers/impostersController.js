@@ -108,7 +108,7 @@ function create (protocols, imposters, Imposter, logger) {
                         removeProxies: queryBoolean(query, 'removeProxies'),
                         list: !(queryBoolean(query, 'replayable') || queryBoolean(query, 'removeProxies'))
                     };
-                    //saveAllImposter(JSON.stringify(getJSON(options)))
+                    saveAllImposter(JSON.stringify(getJSON(options)))
                 response.send({ imposters: getJSON(options) });
             },
             html: function () {
@@ -265,9 +265,10 @@ function create (protocols, imposters, Imposter, logger) {
         var mountebank = require('../mountebank');
         var saveFile = mountebank.saveImpostersFile;
         var saveFileFlag = mountebank.saveImpostersFileFlag; 
-        var makeString = saveFile.toString();
+       
+        if ((saveFileFlag) && (saveFile!==undefined))  {
+       var makeString = saveFile.toString();
         var getStoredFileName = makeString.split(".");
-        if ((saveFileFlag) && (saveFileFlag!==undefined))  {
         var fs = require('fs');
         var myArray = [];
         var myArrayStored = [];
