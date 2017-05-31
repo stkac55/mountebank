@@ -136,8 +136,7 @@ function create (protocols, imposters, Imposter, logger) {
                     var replayablePort;
                     var storeImposterDir = './StoreImposters';
                     var ImposterDir = './Repository_Template';
-                    saveBody.forEach(function (saveImposter) {
-                        console.log("check the port --> "+JSON.stringify(saveImposter))
+                    saveBody.forEach(function (saveImposter) {                        
                         replayablePort = (saveImposter.port).toString();
                         var textFinal = fs.readFileSync(ImposterDir+'/'+saveFile, 'utf-8');
                         if ((textFinal !== '') && (textFinal !== undefined)){
