@@ -247,7 +247,20 @@ function valueType (api, input) {
             }
 
             break;
+        
+        case 'number':
+            if (!_.isUndefined(input.default)) {
+                value = input.default;
+            }			
+            else if (input.format === 'float' || input.format === 'double') {
+                value = '^[+-]?\\\\d+(\\\\.\\\\d+)?$';
+            }
+            else {
+                value = '\\\\d+';
+            }
 
+            break;
+            
         case 'boolean':
             value = true;
             value = !!(value === 'true' || value === true);
