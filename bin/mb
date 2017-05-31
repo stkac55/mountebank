@@ -229,7 +229,7 @@ function serverAt (options) {
         getConfig(options).then(function (response) {
 			  var filename = options.swaggerfile;
 			  var ext = filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
-				if( (ext === 'json') || (ext === 'yml') || (ext === 'yaml')){
+				if( (ext.toLowerCase() === 'json') || (ext.toLowerCase() === 'yml') || (ext.toLowerCase() === 'yaml')){
             swaggerparser.swagger(options.swaggerfile, options.imposterport, options.port);
 			}
 			else{
