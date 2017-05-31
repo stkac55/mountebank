@@ -175,7 +175,7 @@ function getrequestMockValue (api, schema) {
             break;
 
         case 'integer':
-            value = '\\d+';
+            value = '\\d+$';
 
             break;
 
@@ -197,7 +197,7 @@ function getrequestMockValue (api, schema) {
             break;
 
         case 'number':
-            value = '\\d+';
+            value = '\\d+$';
 
             break;
 
@@ -229,9 +229,6 @@ function valueType (api, input) {
             else if (_.isArray(input.enum)) {
                 value = input.enum[0];
             }
-            else if (input.format === 'float' || input.format === 'double') {
-                value = '^[+-]?\\\\d+(\\\\.\\\\d+)?$';
-            }
             else {
                 value = '.+';
             }
@@ -243,7 +240,7 @@ function valueType (api, input) {
                 value = input.default;
             }
             else {
-                value = '\\\\d+';
+                value = '\\\\d+$';
             }
 
             break;
@@ -256,7 +253,7 @@ function valueType (api, input) {
                 value = '^[+-]?\\\\d+(\\\\.\\\\d+)?$';
             }
             else {
-                value = '\\\\d+';
+                value = '\\\\d+$';
             }
 
             break;
@@ -303,7 +300,7 @@ function getParamvalues (api, body, parameters, paths) {
                 }
                 else if (paramType.in === 'path') {
                     var url = '{' + paramType.name + '}',
-                        path = body.replace('#path', paths[0]);
+                        path = body.replace('#path', paths[0]+'$');
                     body = path.replace(url, '[^/]+');
                 }
             }
