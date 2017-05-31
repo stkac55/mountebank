@@ -227,8 +227,8 @@ function serverAt (options) {
     function swagger () {
         var swaggerparser = require ('../src/util/swagger.js');
         getConfig(options).then(function (response) {
-			  var filename = options.swaggerfile;
-			  var ext = filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+			  var fileName = options.swaggerfile;
+			  var ext = fileName.substring(fileName.lastIndexOf('.') + 1);
 				if( (ext.toLowerCase() === 'json') || (ext.toLowerCase() === 'yml') || (ext.toLowerCase() === 'yaml')){
             swaggerparser.swagger(options.swaggerfile, options.imposterport, options.port);
 			}
