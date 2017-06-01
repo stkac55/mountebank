@@ -97,10 +97,10 @@ function create (imposters) {
     function deleteImposter (id) {
         var mountebank = require('../mountebank');
         var saveFile = mountebank.saveImpostersFile;
-        var saveFileFlag = mountebank.saveImpostersFileFlag;  
+        var saveFileFlag = mountebank.saveImpostersFileFlag;         
+        if ((saveFileFlag) && (saveFile!==undefined)) { 
         var makeString = saveFile.toString();
         var getStoredFileName = makeString.split("."); 
-        if ((saveFileFlag) && (saveFile!==undefined)) { 
         var fs = require('fs');
         var myArray = [];
         var myArrayStored = [];
