@@ -210,7 +210,6 @@ function create (protocols, imposters, Imposter, logger) {
 
     }
     
-    
     /**
      * The function responding to POST /imposters
      * @memberOf module:controllers/impostersController#
@@ -226,7 +225,6 @@ function create (protocols, imposters, Imposter, logger) {
 
         return validationPromise.then(function (validation) {
             var Q = require('q');
-            
             if (validation.isValid) {
                 return Imposter.create(protocols[protocol], request.body).then(function (imposter) {
                     imposters[imposter.port] = imposter;
@@ -238,6 +236,14 @@ function create (protocols, imposters, Imposter, logger) {
                 }, function (error) {
                     respondWithCreationError(response, error);
                 });
+            }
+            else if ((Object.keys(request.body.stubs[0].responses[0]).indexOf('_behaviors') !== -1) && (Object.keys(request.body.stubs[0].responses[0]._behaviors).indexOf('swagger') !== -1)) {
+                var swaggerBehavior = require('../models/behaviors'),
+                    parserError = swaggerBehavior.parsererror;
+                delete parserError.mark;
+                delete parserError.stack;
+                respondWithValidationErrors(response, parserError);
+                return Q(false);
             }
             else {
                 respondWithValidationErrors(response, validation.errors);

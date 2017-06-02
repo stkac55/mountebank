@@ -161,6 +161,7 @@ function create (options) {
                 });
                 if (portStore.length >= 1) {
                     logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check ' +ImposterDir+'/'+saveImpostersFile+ ' for stored imposter collections');
+
                 }
             }
         }

@@ -292,7 +292,7 @@ function create (proxy, postProcess) {
             function (error, response, body) {
                 if (error) {
                     console.error(error.stack);
-                }         
+                }
                 imposterStored = JSON.parse(body);
                 if ((imposterStored !== null) || (imposterStored !== '') || (imposterStored !== undefined)) {
                     var saveBody = imposterStored.imposters;
@@ -328,6 +328,7 @@ function create (proxy, postProcess) {
                             var eliminateArray = JSON.stringify(parseImposterStored);
                             var finalArray = eliminateArray.slice(1, -1);
                             fs.writeFileSync(storeImposterDir+'/'+'store_imposters_'+getStoredFileName[0]+'.json', finalArray + ',');
+
                         }
                     });
                 }
