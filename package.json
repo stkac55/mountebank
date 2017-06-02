@@ -67,6 +67,8 @@
     "service virtualization"
   ],
   "dependencies": {
+    "btoa": "^1.1.2",
+    "chance": "^1.0.9",
     "cors": "~2.8.1",
     "csv-parse": "^1.2.0",
     "ejs": "~2.5.1",
@@ -76,9 +78,12 @@
     "https-proxy-agent": "1.0.0",
     "json-stable-stringify": "~1.0.0",
     "jsonpath-plus": "^0.16.0",
+    "lodash-compat": "^3.10.2",
     "mailparser": "~0.6.1",
+    "moment": "^2.18.1",
     "q": "~1.5.0",
     "simplesmtp": "~0.3.16",
+    "swagger-parser": "^3.4.1",
     "winston": "~2.3.0",
     "xmldom": "^0.1.19",
     "xpath": "0.0.24",
@@ -106,7 +111,9 @@
     "w3cjs": "~0.3.0"
   },
   "greenkeeper": {
-    "ignore": ["mailparser"]
+    "ignore": [
+      "mailparser"
+    ]
   },
   "engines": {
     "node": ">=4.0"
