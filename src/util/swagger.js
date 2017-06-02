@@ -385,7 +385,8 @@ function finalImposter (api, imposterPort, imposter) {
         buildImposterbody += responses;
     });
     var finalImposterbody = preImposterbody + buildImposterbody + ']\n}';
-    var imposterStructure = finalImposterbody.replace(',]', ']').replace('#name', api.info.title).replace('#protocol', api.schemes[0]);
+    var protocol = (api.schemes !== undefined) ? api.schemes[0] : 'http';
+    var imposterStructure = finalImposterbody.replace(',]', ']').replace('#name', api.info.title).replace('#protocol', protocol);
     return imposterStructure;
 }
 
