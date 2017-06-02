@@ -1,0 +1,1177 @@
+#####
+# Capital One Confidential & Proprietary 
+#
+# Example YAML file that provides the Open API definition of a single resource and two operations (POST and GET).
+# If you're new to YAML, see "YAML Tips and Examples", https://pulse.kdc.capitalone.com/docs/DOC-136455.
+# For the full Open API (aka Swagger) 2.0 spec, see https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md.
+#
+# Throughout your API definition, make sure you explain if an element's value must be encoded or encrypted (e.g. URL or Base64).
+#
+# For more information about designing and submitting an API, go to the 
+# "API Center of Excellence" (https://pulse.kdc.capitalone.com/groups/api-center-of-excellence)
+#
+#####
+
+# Specifies the version of the Open API specification that this file conforms to.
+# Leave the value as it is ("2.0").
+swagger: "2.0"
+
+info:
+  title: Bank IVR Operations
+
+  description: |
+    The API is a collective placeholer for multiple Bank IVR Operations:
+    
+    * Lists Customer Details
+    * List Customer Accounts
+    * List Customer Account Info
+    * Lists Current Rates
+    * Writes Activity Logs
+    * Writes Activity Interaction
+    * Gets External Accounts
+    * Confirms LODT Amounts
+    * Initiates Move Money
+    * Customer Authentication
+    * Customer Details Ipdate
+    * Generating Random Question ID
+    
+  version: "1.0"
+  
+  contact:
+    name: "Raj Gaurav"
+    email: "Raj.Gaurav@capitalone.com"
+    
+  # Leave the 'license:' block as it is.  
+  license:
+    name: Capital One Proprietary
+    url: http://www.capitalone.com/license_path
+
+# Leave the 'schemes:' array as it is.
+schemes:
+  - https
+  
+consumes:
+  - application/xml
+  - application/json
+
+produces:
+  - application/xml
+  - application/json
+
+tags: 
+  - name: "BANKIVR"
+
+# Here's the host: field, which we only mention in order to point out that it isn't used. 
+# When you register your API's endpoints, you'll be asked to specify the host (or hosts) that
+# will serve those endpoints. Each endpoint can be served by a different host.
+host: "dev.null"
+
+# 'paths:' contains a list of the resources, identified by URL, that comprise the API. 
+# This YAML file defines a single resource: /banks/{bankReferenceId}/gifts.  
+paths:
+  /private/asvbankivr/servlet/cust-detail:
+    parameters:
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: true
+        type: string
+      # And here's a header declaration.
+    
+    # Next come the operations, identified by HTTP method, that this resource supports. Note that the HTTP method names
+    # must be lower case ('post', not 'POST'). This resource has two HTTP methods, 'post' and 'get'.
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Retrieves the customer details for a specific customer id
+      description: Retrieves the customer details for a specific customer id
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer Details were successfully retrieved.
+          schema:
+            $ref: '#/definitions/CustDetailResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        
+  /private/asvbankivr/servlet/account-list:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: true
+        type: string
+      - name: sAcctType
+        in: query
+        description: Account Type
+        required: true
+        type: string
+      - name: fromMoveMoney
+        in: query
+        description: Indicates if this is For Move Money
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Retrieves the customer accounts (except closed accounts)
+      description: Retrieves the customer accounts (except closed accounts)
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer Accounts  were successfully retrieved.
+          schema:
+            $ref: '#/definitions/AccountListResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/dup-tax-check:
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Checks DupTax Validity
+      description: Checks DupTax Validity
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Dup Tax Validity confirmed.
+          schema:
+            $ref: '#/definitions/DupTaxResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/dup-taxform-request:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: true
+        type: string
+      - name: http_type
+        in: query
+        description: Whether its a Validate or Submit
+        required: true
+        type: string
+      - name: http_iid
+        in: query
+        description: Interaction Id
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Either Validates or Submits Duplicate Tax Form Request
+      description: Either Validates or Submits Duplicate Tax Form Request
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Tax Form Details were successfully submitted or validated
+          schema:
+            $ref: '#/definitions/DupTaxFormResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/account-history:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_acct
+        in: query
+        description: A Unique Customer ID
+        required: true
+        type: string
+      - name: http_max
+        in: query
+        description: Max No of Records
+        required: true
+        type: integer
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Retrieves the customer account transactions
+      description: Retrieves the customer account transactions
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer Account Transactions were successfully retrieved.
+          schema:
+            $ref: '#/definitions/AccountTransactionsResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/cust-get-summary:
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Gets customer summary
+      description: Gets customer summary
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Successfully returned customer summary
+          schema:
+            $ref: '#/definitions/CustGetSummaryResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/get-external-accounts:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: true
+        type: string
+      - name: http_verified
+        in: query
+        description: Verified customer or not
+        required: true
+        type: boolean
+      - name: http_is_deposit_only
+        in: query
+        description: Deposit from to
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Retrieves the external customer accounts
+      description: Retrieves the external customer accounts
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer External Accounts were successfully retrieved.
+          schema:
+            $ref: '#/definitions/GetExternalAccountsResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  
+  /private/asvbankivr/servlet/rates:
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Gets Rates
+      description: Gets Rates
+      responses:
+        200:
+          description: Retrieves Specific Product Rates
+          schema:
+            $ref: '#/definitions/RetrieveRatesResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /private/asvbankivr/servlet/activity-write:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: false
+        type: string
+      - name: http_GroupID
+        in: query
+        description: Group Id
+        required: true
+        type: string
+      - name: http_WorkType
+        in: query
+        description: Work Type
+        required: true
+        type: string                
+      - name: http_WorkItem
+        in: query
+        description: Work Item Id
+        required: true
+        type: string
+      - name: http_ActType
+        in: query
+        description: Activity type
+        required: true
+        type: string
+      - name: http_ANI
+        in: query
+        description: Calling number
+        required: true
+        type: string
+      - name: http_DNIS
+        in: query
+        description: DNI
+        required: true
+        type: string
+      - name: http_CallType
+        in: query
+        description: Call type
+        required: true
+        type: string
+      - name: http_CallID
+        in: query
+        description: Unique Call id
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Creates the interaction Id and group Id to write the activity
+      description: Retrieves the customer accounts (except closed accounts)
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer Accounts  were successfully retrieved.
+          schema:
+            $ref: '#/definitions/ActivityWriteResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/read-activity-write:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_CIF
+        in: query
+        description: A Unique Customer ID
+        required: false
+        type: string
+      - name: http_IID
+        in: query
+        description: Interaction Id
+        required: true
+        type: string
+      - name: http_Ref
+        in: query
+        description: Ref field in Database
+        required: true
+        type: string                
+      - name: http_ActType
+        in: query
+        description: Activity type
+        required: true
+        type: string
+      - name: http_GroupID
+        in: query
+        description: Group Id
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Creates the activity using interaction id and group id
+      description: Creates the activity using interaction id and group id
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Activity is successfully created
+          schema:
+            $ref: '#/definitions/ReadActivityWriteResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /private/asvbankivr/servlet/lodt-verify:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_cif
+        in: query
+        description: Unique Customer Id
+        required: true
+        type: string
+      - name: http_link
+        in: query
+        description: Link
+        required: true
+        type: string
+      - name: http_DEP1
+        in: query
+        description: First Deposit Amount to Validate
+        required: true
+        type: string
+      - name: http_DEP2
+        in: query
+        description: Second Deposit Amount to Validate
+        required: true
+        type: string
+      - name: http_IID
+        in: query
+        description: Unique Interaction ID
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: = Validates LODT Amounts
+      description: Validates LODT Amounts
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Successfully validated the LODT amounts
+          schema:
+            $ref: '#/definitions/LODTVerifyResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'        
+            
+  /private/asvbankivr/servlet/random:
+    parameters:
+      # Here we define the path parameter (bankReferenceId) that appears in the URL.
+      - name: http_max
+        in: query
+        description: number of random question
+        required: true
+        type: integer
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Retrieves number of Random question
+      description: Retrieves number of Random question
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: returns the number of random questions
+          schema:
+            $ref: '#/definitions/RandomResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+         
+  /private/asvbankivr/servlet/move-money:
+    parameters:
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: false
+        type: string
+      - name: http_id
+        in: query
+        description: Interaction Id
+        required: true
+        type: string
+      - name: http_frm_acct
+        in: query
+        description: From Account
+        required: true
+        type: string                
+      - name: http_frm_bank
+        in: query
+        description: from bank
+        required: true
+        type: string
+      - name: http_to_acct
+        in: query
+        description: to account
+        required: true
+        type: string
+      - name: http_to_bank
+        in: query
+        description: to bank
+        required: true
+        type: string
+      - name: http_amt
+        in: query
+        description: amount
+        required: true
+        type: string
+
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: transfers the money between accounts of the same bank and external banks
+      description: transfers the money between accounts of the same bank and external banks
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Transfers the money from account to another.
+          schema:
+            $ref: '#/definitions/MoveMoneyResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+         description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+         schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        # For http status codes that are unambiguous with regard to the
+        # cause of the error, you can exclude the error code table. 
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /private/asvbankivr/servlet/cust-auth:
+    parameters:
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: false
+        type: string
+      - name: http_qID
+        in: query
+        description: question ID
+        required: true
+        type: string
+      - name: http_qa
+        in: query
+        description: question 
+        required: true
+        type: string 
+      - name: http_pin
+        in: query
+        description: pin of the customer
+        required: false
+        type: string
+      - name: http_ID
+        in: query
+        description: Interaction Id
+        required: true
+        type: string
+      - name: http_pin_only
+        in: query
+        description: pin only or no pin for the customer
+        required: true
+        type: string
+                                           
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Customer is authenticated 
+      description: Customer is authenticated
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer is authenticated.
+          schema:
+            $ref: '#/definitions/CustAuthResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        # For http status codes that are unambiguous with regard to the
+        # cause of the error, you can exclude the error code table. 
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /private/asvbankivr/servlet/set-cust-detail:
+    parameters:
+      - name: http_cif
+        in: query
+        description: A Unique Customer ID
+        required: false
+        type: string
+      - name: http_ID
+        in: query
+        description: Interaction Id
+        required: true
+        type: string
+      - name: http_pin
+        in: query
+        description: pin of customer
+        required: true
+        type: string                
+                                           
+    get:
+      # The 'summary:' value is used as the name of the operation in the documentation. In general, it should be formed 
+      # to finish the sentence "This operation lets you..." 
+      summary: Customer pin is updated 
+      description: Customer pin is updated
+
+      # The 'responses' section defines the response messages that are returned by this operation. The responses
+      # are listed by HTTP status code.
+      responses:
+        200:
+          description: Customer pin is updated.
+          schema:
+            $ref: '#/definitions/SetCustDetailResponse'
+          # A 201 return is obliged to include a 'Location:' header that gives the
+          # URL of the newly-created resource.
+          headers:
+            Location:
+              type: string
+              description: The URL of the resource that was created.    
+        400:
+          description: | 
+            Client error. Possible error codes are:
+            
+            | Error Code | Description |
+            | --- | --- |
+            | 101 | A required body property is missing. |
+            | 102 | The value of the `category` body property is unrecognized. |
+            | 103 | The value of the `monetaryValue` body property is out of bounds. |
+          schema:
+            $ref: '#/definitions/ErrorResponse' 
+
+        # For http status codes that are unambiguous with regard to the
+        # cause of the error, you can exclude the error code table. 
+        500:
+          description: The API encountered an error while attempting to communicate with the back end.
+          schema:
+            $ref: '#/definitions/ErrorResponse'            
+            
+# The definitions: block defines the JSON structures that you use in your request and response bodies.
+definitions:
+  CustDetailResponse:
+    properties:
+      custDetails:
+        description : Cust Details Object
+        required:
+          - cif
+          - isMinor
+          - lockedOut
+          - migrated
+          - phone
+          - pinStatus
+          - postalCode
+        properties:
+         cif:
+           description: 'Customer Id'
+           type: string
+         isMinor:
+            description: 'Minor'
+            type: boolean
+         lockedOut:
+            description: 'If customer is locked out'
+            type: boolean
+         migrated:
+            description: 'If customer is migrated'
+            type: boolean         
+         phone:
+           description: 'Phone Number'
+           type: string
+         pinStatus:
+           description: 'Whether PIN is ok or migrated '
+           type: string
+         postalCode:
+           description: 'Customer Zip'
+           type: string
+           
+  AccountListResponse:
+    properties:
+      accountList:
+       description: 'Array of Account objects'
+       type: array
+       items:
+           $ref: '#/definitions/Account'
+           
+  Account:
+        required:
+          - cif
+          - isMinor
+          - lockedOut
+          - migrated
+          - phone
+          - pinStatus
+          - postalCode
+        properties:
+         cif:
+           description: 'Customer Id'
+           type: string
+         isMinor:
+            description: 'Minor'
+            type: boolean
+         lockedOut:
+            description: 'If customer is locked out'
+            type: boolean
+         migrated:
+            description: 'If customer is migrated'
+            type: boolean         
+         phone:
+           description: 'Phone Number'
+           type: string
+         pinStatus:
+           description: 'Whether PIN is ok or migrated '
+           type: string
+         postalCode:
+           description: 'Customer Zip'
+           type: string
+           
+  DupTaxResponse:
+    required:
+      - dupeTax
+    properties:
+         dupeTax:
+           description: 'Dupe Tax Status'
+           type: boolean
+           
+  DupTaxFormResponse:
+    required:
+      - cif
+      - hasTaxForms
+      - isEfirst
+      - isIn14Days
+    properties:
+         cif:
+           description: 'Unique Customer Id'
+           type: string
+         hasTaxForms:
+           description: 'Dupe Tax Status'
+           type: boolean
+         isEfirst:
+           description: 'Is E1st'
+           type: boolean
+         isIn14Days:
+           description: 'Is In 14 days'
+           type: boolean
+           
+  AccountTransactionsResponse:
+    properties:
+      accountTransactionList:
+       description: 'Array of Account Transaction objects'
+       type: array
+       items:
+           $ref: '#/definitions/AccountTransactions'
+           
+  AccountTransactions:
+        required:
+          - amt
+          - credit
+          - date
+          - desc
+          - transactionSequenceNumber
+        properties:
+         amt:
+           description: 'Amount'
+           type: string
+         credit:
+            description: 'Credit or Debit'
+            type: boolean
+         date:
+            description: 'Transaction Date'
+            type: string
+         desc:
+            description: 'Description of the transaction'
+            type: boolean         
+         transactionSequenceNumber:
+           description: 'Transaction sequence number'
+           type: integer
+
+  CustGetSummaryResponse:
+        required:
+          - cif
+        properties:
+         cif:
+           description: 'Unique customer Id'
+           type: string
+           
+  GetExternalAccountsResponse:
+    properties:
+      externalAccountList:
+       description: 'Array of Account objects'
+       type: array
+       items:
+           $ref: '#/definitions/ExternalAccount'
+           
+  ExternalAccount:
+        required:
+          - accountNumber
+          - bankNumber
+          - externalRef
+          - linkStatus
+          - lodtFail
+          
+        properties:
+         accountNumber:
+           description: 'Customer External Account'
+           type: string
+         bankNumber:
+            description: 'External Bank Number'
+            type: string
+         externalRef:
+            description: 'Reference Count'
+            type: integer
+         linkStatus:
+            description: 'Link Status'
+            type: string         
+         lodtFail:
+           description: 'Has Failed LODT'
+           type: string
+           
+  RetrieveRatesResponse:
+    required:
+      - ratesResponse
+    properties:
+      ratesResponse:
+        description: Rates of the specific product types.
+        type: integer
+        
+  ActivityWriteResponse:
+    properties:
+      interactionList:
+       description: 'entries of group id and Interaction id'
+       type: array
+       items:
+           $ref: '#/definitions/interaction'
+
+  interaction:
+        required:
+          - groupId
+          - iid
+        properties:
+         groupId:
+           description: 'Group Id'
+           type: string
+         iid:
+            description: 'Interaction Id'
+            type: string
+
+  ReadActivityWriteResponse:
+    properties:
+      response:
+       description: 'entries of group id and Interaction id'
+       type: string
+        
+  LODTVerifyResponse:
+    required:
+      - confirm
+    properties:
+      confirm:
+         description: Assert if LODT was successful
+         type: string
+         
+  RandomResponse:
+    required:
+      - randomValue
+    properties:
+      randomValue:
+         description: Number of Random question
+         type: integer
+
+  MoveMoneyResponse:
+    properties:
+      confirm:
+       description: 'The confirmation number of the transfer'
+       type: integer         
+     
+  CustAuthResponse:
+    properties:
+      authresponseList:
+       description: 'Array of Account objects'
+       type: array
+       items:
+           $ref: '#/definitions/CredStatus'
+
+  CredStatus:
+    required:
+      - creditStatus
+    properties:
+      creditStatus:
+         description: Customer status after authentication
+         type: string
+         
+  SetCustDetailResponse:
+    properties:
+      response:
+       description: 'response with no error '
+       type: string
+       
+  ErrorResponse:
+    description: Standard error response structure for internal APIs.
+    properties:
+      id:
+        description: Error code that identifies the type of error that was encountered.
+        type: integer
+      developerText:
+        description: Error message that's meant to be used during development and debugging.
+        type: string

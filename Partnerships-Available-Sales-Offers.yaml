@@ -1,0 +1,174 @@
+ swagger: "2.0"
+ info:
+  description: Partnerships Available Sales Offers allows partnerships clients to get available sales offers for the account.
+  version: "1.0"
+  title: Partnerships Available Sales Offers
+  contact:
+    name: CIA@capitalone.com
+  license:
+    name: Capital One Proprietary
+    url: http://www.capitalone.com/license_path
+    
+ schemes:
+  - https
+ paths:
+  '/partnerships/{partnershipReferenceId}/accounts/{accountReferenceId}/sales-offers':
+    get:
+      tags:
+        - partnerships sales offers
+      summary: This API retrives available sales offers for an account.
+      description: This API supports to retrieve either all or specific type of aviailable sales offers such as balance transfer, product change and credit limit incraese.
+      operationId: sales-Offers
+      consumes:
+        - application/json;v=1
+        - application/xml;v=1
+      produces:
+        - application/json;v=1
+        - application/xml;v=1
+      parameters:
+        - in: header
+          name: Api-Key
+          description: Token used to identify the calling application to which Capital One has granted permission to call this API. (e.g. MOBILE, EOS, IRIS, IPS, RTM, and WALLET)
+          required: true
+          type: string
+          default: IRIS
+        - in: header
+          name: Content-Type
+          description: Content-Type of the image
+          required: true
+          type: string
+        - in: header
+          name: User-Id
+          description: Unique identifier of the end user making the request. This could be a customer service representative, or the customer themselves. Used for audit purposes. (e.g. abc123)
+          required: true
+          type: string
+        # QUERY PARAMETERS
+        - in: query
+          name: offerType
+          description: This optional parameter will be used to get specific categorized offers. (e.g. BalanceTransfer, ProductChange, CreditLimitIncrease)
+          required: true
+          type: string
+          enum:
+            - BalanceTransfer
+            - ProductChange
+            - CreditLimitIncrease
+        # PATH PARAMETERS
+        - name: partnershipReferenceId
+          in: path
+          description: The encrypted value of orgId and sorId
+          required: true
+          type: string
+          default: 'mO%2B2KG6v%2BFDrqi%2FdtJr6pHdGNox64%2BBFT884bRoxn1k%3D'
+        - name: accountReferenceId
+          in: path
+          description: The encrypted value of accountId and logo
+          required: true
+          type: string
+          default: 'UnWzyXxPCacw%2B%2FZbDQGwqjK0Gx3mkD0C3PQZ8oEf8rUjnubxlthFQ9nJwZ1t1ZS4'
+          
+# BODY PARAMETER
+
+# HTTP RESPONSES
+      responses:
+        200:
+          description: Success. Sales offers information is retrieved successfully.
+          schema:
+            $ref: "#/definitions/SuccessSalesOffers"
+        400:
+          description: The request could not be understood by the server due to malformed syntax. The client should not repeat the request without modifications.
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        403:
+          description: The client is not Authorized. The request is not allowed.
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        404:
+          description: The server has not found anything matching the Request-URI. No indication is given of whether the condition is temporary or permanent.
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: Internal Server Error. The server encountered an unexpected condition which prevented it from fulfilling the request.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+# RESPONSE BODY
+
+# DEFINITIONS USED IN THIS INTERFACE SPECIFICATION
+ definitions:
+  SuccessSalesOffers:
+    type: array
+    description: This is the successfull response returned as an array of sales offers.
+    items:
+      properties:
+        offerId:
+            type: string
+            description: Unique identifier for each an offer.
+        offerDescription:
+            type: string
+            description: Text describing offer information. 
+        offerTypeDescription:
+            type: string
+            description: Text describing specific type offer information. (e.g. SWP, BLB) 
+        offerExpirationDate:
+            type: string
+            format: date
+            description: The date when specific offer expires. Format YYYY-MM-DD 
+        offerSubTypeCode:
+            type: string
+            description: Unique code that indentifies the sub classification of offer type. 
+        agentIncentivePointCount:
+            type: integer
+            description: Incentive points information for an agent.
+        offerAdditionalInformation:
+            type: string
+            description: Customized information from backend systems to the client for each offer.
+        startCheckNumber:
+            type: number
+            description: The specific check number identifying the first of a range of available check numbers associated with balance transfer offers.
+        endCheckNumber:
+            type: number
+            description: The specific check number identifying the last of a range of available check numbers associated with balance transfer offers. 
+        currentProduct:
+            type: string
+            description: Current product type associated with product change offers. (e.g. Gold)
+        futureProduct:
+            type: string
+            description: Future product type associated with product change offers. (e.g. Platinum)
+        isCardTransferRequired:
+            type: boolean
+            description: Indicates whether the offer need card transfer or not. Valid values:true or false
+  
+  ErrorDetail:
+    properties:
+      id:
+        type: string
+        description: The identifier of the platform defined error code.  The error detail error code may often be the same as the top level or overall platform defined error code.  They can be customized by the API Producer team.  Clients should be able to leverage this field when control flow is needed.
+      text:
+        type: string
+        description: A message related to this error that is intended to be customer facing.  At the detail level this field will often be blank or null as most conditions do not require multiple client facing messages.
+      developerText:
+        type: string
+        description: 'A message related to this error that will be useful for the developer or IPS teams when debugging, or provides other technical information.  Generally contains the cause of the exception.'
+    description: An optional structure to hold details when 4xx and 5xx errors occur.
+  ErrorResponse:
+    properties:
+      id:
+        type: string
+        description: The identifier of the platform defined error code.  These codes are assigned by the API Producer team.  Clients should be able to leverage this field when control flow is needed.
+      text:
+        type: string
+        description: A message related to this error that is intended to be customer facing.
+      developerText:
+        type: string
+        description: 'A message related to this error that will be useful for the developer or IPS teams when debugging, or provides other technical information.  Generally contains the cause of the exception.'
+      errorDetails:
+        type: array
+        description: 'Contains additional information, when applicable, about the error that occurred.'
+        items:
+          $ref: '#/definitions/ErrorDetail'
+      actions:
+        type: array
+        description: 'Contains actionable links for current error, typically click-to-call, click-to-email etc.'
+        items:
+          type: string
+    description: This is the standard response object returned when 4xx and 5xx errors occur.

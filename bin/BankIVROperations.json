@@ -1,0 +1,1226 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Bank IVR Operations",
+        "description": "The API is a collective placeholer for multiple Bank IVR Operations:\n\n* Lists Customer Details\n* List Customer Accounts\n* List Customer Account Info\n* Lists Current Rates\n* Writes Activity Logs\n* Writes Activity Interaction\n* Gets External Accounts\n* Confirms LODT Amounts\n* Initiates Move Money\n* Customer Authentication\n* Customer Details Ipdate\n* Generating Random Question ID\n",
+        "version": "1.0",
+        "contact": {
+            "name": "Raj Gaurav",
+            "email": "Raj.Gaurav@capitalone.com"
+        },
+        "license": {
+            "name": "Capital One Proprietary",
+            "url": "http://www.capitalone.com/license_path"
+        }
+    },
+    "schemes": [
+        "https"
+    ],
+    "consumes": [
+        "application/xml",
+        "application/json"
+    ],
+    "produces": [
+        "application/xml",
+        "application/json"
+    ],
+    "tags": [
+        {
+            "name": "BANKIVR"
+        }
+    ],
+    "host": "dev.null",
+    "paths": {
+        "/private/asvbankivr/servlet/cust-detail": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Retrieves the customer details for a specific customer id",
+                "description": "Retrieves the customer details for a specific customer id",
+                "responses": {
+                    "200": {
+                        "description": "Customer Details were successfully retrieved.",
+                        "schema": {
+                            "$ref": "#/definitions/CustDetailResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/account-list": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "sAcctType",
+                    "in": "query",
+                    "description": "Account Type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "fromMoveMoney",
+                    "in": "query",
+                    "description": "Indicates if this is For Move Money",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Retrieves the customer accounts (except closed accounts)",
+                "description": "Retrieves the customer accounts (except closed accounts)",
+                "responses": {
+                    "200": {
+                        "description": "Customer Accounts  were successfully retrieved.",
+                        "schema": {
+                            "$ref": "#/definitions/AccountListResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/dup-tax-check": {
+            "get": {
+                "summary": "Checks DupTax Validity",
+                "description": "Checks DupTax Validity",
+                "responses": {
+                    "200": {
+                        "description": "Dup Tax Validity confirmed.",
+                        "schema": {
+                            "$ref": "#/definitions/DupTaxResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/dup-taxform-request": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_type",
+                    "in": "query",
+                    "description": "Whether its a Validate or Submit",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_iid",
+                    "in": "query",
+                    "description": "Interaction Id",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Either Validates or Submits Duplicate Tax Form Request",
+                "description": "Either Validates or Submits Duplicate Tax Form Request",
+                "responses": {
+                    "200": {
+                        "description": "Tax Form Details were successfully submitted or validated",
+                        "schema": {
+                            "$ref": "#/definitions/DupTaxFormResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/account-history": {
+            "parameters": [
+                {
+                    "name": "http_acct",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_max",
+                    "in": "query",
+                    "description": "Max No of Records",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "summary": "Retrieves the customer account transactions",
+                "description": "Retrieves the customer account transactions",
+                "responses": {
+                    "200": {
+                        "description": "Customer Account Transactions were successfully retrieved.",
+                        "schema": {
+                            "$ref": "#/definitions/AccountTransactionsResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/cust-get-summary": {
+            "get": {
+                "summary": "Gets customer summary",
+                "description": "Gets customer summary",
+                "responses": {
+                    "200": {
+                        "description": "Successfully returned customer summary",
+                        "schema": {
+                            "$ref": "#/definitions/CustGetSummaryResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/get-external-accounts": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_verified",
+                    "in": "query",
+                    "description": "Verified customer or not",
+                    "required": true,
+                    "type": "boolean"
+                },
+                {
+                    "name": "http_is_deposit_only",
+                    "in": "query",
+                    "description": "Deposit from to",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Retrieves the external customer accounts",
+                "description": "Retrieves the external customer accounts",
+                "responses": {
+                    "200": {
+                        "description": "Customer External Accounts were successfully retrieved.",
+                        "schema": {
+                            "$ref": "#/definitions/GetExternalAccountsResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/rates": {
+            "get": {
+                "summary": "Gets Rates",
+                "description": "Gets Rates",
+                "responses": {
+                    "200": {
+                        "description": "Retrieves Specific Product Rates",
+                        "schema": {
+                            "$ref": "#/definitions/RetrieveRatesResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/activity-write": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "http_GroupID",
+                    "in": "query",
+                    "description": "Group Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_WorkType",
+                    "in": "query",
+                    "description": "Work Type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_WorkItem",
+                    "in": "query",
+                    "description": "Work Item Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_ActType",
+                    "in": "query",
+                    "description": "Activity type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_ANI",
+                    "in": "query",
+                    "description": "Calling number",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_DNIS",
+                    "in": "query",
+                    "description": "DNI",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_CallType",
+                    "in": "query",
+                    "description": "Call type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_CallID",
+                    "in": "query",
+                    "description": "Unique Call id",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Creates the interaction Id and group Id to write the activity",
+                "description": "Retrieves the customer accounts (except closed accounts)",
+                "responses": {
+                    "200": {
+                        "description": "Customer Accounts  were successfully retrieved.",
+                        "schema": {
+                            "$ref": "#/definitions/ActivityWriteResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/read-activity-write": {
+            "parameters": [
+                {
+                    "name": "http_CIF",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "http_IID",
+                    "in": "query",
+                    "description": "Interaction Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_Ref",
+                    "in": "query",
+                    "description": "Ref field in Database",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_ActType",
+                    "in": "query",
+                    "description": "Activity type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_GroupID",
+                    "in": "query",
+                    "description": "Group Id",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Creates the activity using interaction id and group id",
+                "description": "Creates the activity using interaction id and group id",
+                "responses": {
+                    "200": {
+                        "description": "Activity is successfully created",
+                        "schema": {
+                            "$ref": "#/definitions/ReadActivityWriteResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/lodt-verify": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "Unique Customer Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_link",
+                    "in": "query",
+                    "description": "Link",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_DEP1",
+                    "in": "query",
+                    "description": "First Deposit Amount to Validate",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_DEP2",
+                    "in": "query",
+                    "description": "Second Deposit Amount to Validate",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_IID",
+                    "in": "query",
+                    "description": "Unique Interaction ID",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "= Validates LODT Amounts",
+                "description": "Validates LODT Amounts",
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated the LODT amounts",
+                        "schema": {
+                            "$ref": "#/definitions/LODTVerifyResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/random": {
+            "parameters": [
+                {
+                    "name": "http_max",
+                    "in": "query",
+                    "description": "number of random question",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "summary": "Retrieves number of Random question",
+                "description": "Retrieves number of Random question",
+                "responses": {
+                    "200": {
+                        "description": "returns the number of random questions",
+                        "schema": {
+                            "$ref": "#/definitions/RandomResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/move-money": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "http_id",
+                    "in": "query",
+                    "description": "Interaction Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_frm_acct",
+                    "in": "query",
+                    "description": "From Account",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_frm_bank",
+                    "in": "query",
+                    "description": "from bank",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_to_acct",
+                    "in": "query",
+                    "description": "to account",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_to_bank",
+                    "in": "query",
+                    "description": "to bank",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_amt",
+                    "in": "query",
+                    "description": "amount",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "transfers the money between accounts of the same bank and external banks",
+                "description": "transfers the money between accounts of the same bank and external banks",
+                "responses": {
+                    "200": {
+                        "description": "Transfers the money from account to another.",
+                        "schema": {
+                            "$ref": "#/definitions/MoveMoneyResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/cust-auth": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "http_qID",
+                    "in": "query",
+                    "description": "question ID",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_qa",
+                    "in": "query",
+                    "description": "question",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_pin",
+                    "in": "query",
+                    "description": "pin of the customer",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "http_ID",
+                    "in": "query",
+                    "description": "Interaction Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_pin_only",
+                    "in": "query",
+                    "description": "pin only or no pin for the customer",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Customer is authenticated",
+                "description": "Customer is authenticated",
+                "responses": {
+                    "200": {
+                        "description": "Customer is authenticated.",
+                        "schema": {
+                            "$ref": "#/definitions/CustAuthResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/private/asvbankivr/servlet/set-cust-detail": {
+            "parameters": [
+                {
+                    "name": "http_cif",
+                    "in": "query",
+                    "description": "A Unique Customer ID",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "name": "http_ID",
+                    "in": "query",
+                    "description": "Interaction Id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "http_pin",
+                    "in": "query",
+                    "description": "pin of customer",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "summary": "Customer pin is updated",
+                "description": "Customer pin is updated",
+                "responses": {
+                    "200": {
+                        "description": "Customer pin is updated.",
+                        "schema": {
+                            "$ref": "#/definitions/SetCustDetailResponse"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string",
+                                "description": "The URL of the resource that was created."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error. Possible error codes are:\n\n| Error Code | Description |\n| --- | --- |\n| 101 | A required body property is missing. |\n| 102 | The value of the `category` body property is unrecognized. |\n| 103 | The value of the `monetaryValue` body property is out of bounds. |\n",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "The API encountered an error while attempting to communicate with the back end.",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "CustDetailResponse": {
+            "properties": {
+                "custDetails": {
+                    "description": "Cust Details Object",
+                    "required": [
+                        "cif",
+                        "isMinor",
+                        "lockedOut",
+                        "migrated",
+                        "phone",
+                        "pinStatus",
+                        "postalCode"
+                    ],
+                    "properties": {
+                        "cif": {
+                            "description": "Customer Id",
+                            "type": "string"
+                        },
+                        "isMinor": {
+                            "description": "Minor",
+                            "type": "boolean"
+                        },
+                        "lockedOut": {
+                            "description": "If customer is locked out",
+                            "type": "boolean"
+                        },
+                        "migrated": {
+                            "description": "If customer is migrated",
+                            "type": "boolean"
+                        },
+                        "phone": {
+                            "description": "Phone Number",
+                            "type": "string"
+                        },
+                        "pinStatus": {
+                            "description": "Whether PIN is ok or migrated ",
+                            "type": "string"
+                        },
+                        "postalCode": {
+                            "description": "Customer Zip",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "AccountListResponse": {
+            "properties": {
+                "accountList": {
+                    "description": "Array of Account objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Account"
+                    }
+                }
+            }
+        },
+        "Account": {
+            "required": [
+                "cif",
+                "isMinor",
+                "lockedOut",
+                "migrated",
+                "phone",
+                "pinStatus",
+                "postalCode"
+            ],
+            "properties": {
+                "cif": {
+                    "description": "Customer Id",
+                    "type": "string"
+                },
+                "isMinor": {
+                    "description": "Minor",
+                    "type": "boolean"
+                },
+                "lockedOut": {
+                    "description": "If customer is locked out",
+                    "type": "boolean"
+                },
+                "migrated": {
+                    "description": "If customer is migrated",
+                    "type": "boolean"
+                },
+                "phone": {
+                    "description": "Phone Number",
+                    "type": "string"
+                },
+                "pinStatus": {
+                    "description": "Whether PIN is ok or migrated ",
+                    "type": "string"
+                },
+                "postalCode": {
+                    "description": "Customer Zip",
+                    "type": "string"
+                }
+            }
+        },
+        "DupTaxResponse": {
+            "required": [
+                "dupeTax"
+            ],
+            "properties": {
+                "dupeTax": {
+                    "description": "Dupe Tax Status",
+                    "type": "boolean"
+                }
+            }
+        },
+        "DupTaxFormResponse": {
+            "required": [
+                "cif",
+                "hasTaxForms",
+                "isEfirst",
+                "isIn14Days"
+            ],
+            "properties": {
+                "cif": {
+                    "description": "Unique Customer Id",
+                    "type": "string"
+                },
+                "hasTaxForms": {
+                    "description": "Dupe Tax Status",
+                    "type": "boolean"
+                },
+                "isEfirst": {
+                    "description": "Is E1st",
+                    "type": "boolean"
+                },
+                "isIn14Days": {
+                    "description": "Is In 14 days",
+                    "type": "boolean"
+                }
+            }
+        },
+        "AccountTransactionsResponse": {
+            "properties": {
+                "accountTransactionList": {
+                    "description": "Array of Account Transaction objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AccountTransactions"
+                    }
+                }
+            }
+        },
+        "AccountTransactions": {
+            "required": [
+                "amt",
+                "credit",
+                "date",
+                "desc",
+                "transactionSequenceNumber"
+            ],
+            "properties": {
+                "amt": {
+                    "description": "Amount",
+                    "type": "string"
+                },
+                "credit": {
+                    "description": "Credit or Debit",
+                    "type": "boolean"
+                },
+                "date": {
+                    "description": "Transaction Date",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "Description of the transaction",
+                    "type": "boolean"
+                },
+                "transactionSequenceNumber": {
+                    "description": "Transaction sequence number",
+                    "type": "integer"
+                }
+            }
+        },
+        "CustGetSummaryResponse": {
+            "required": [
+                "cif"
+            ],
+            "properties": {
+                "cif": {
+                    "description": "Unique customer Id",
+                    "type": "string"
+                }
+            }
+        },
+        "GetExternalAccountsResponse": {
+            "properties": {
+                "externalAccountList": {
+                    "description": "Array of Account objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ExternalAccount"
+                    }
+                }
+            }
+        },
+        "ExternalAccount": {
+            "required": [
+                "accountNumber",
+                "bankNumber",
+                "externalRef",
+                "linkStatus",
+                "lodtFail"
+            ],
+            "properties": {
+                "accountNumber": {
+                    "description": "Customer External Account",
+                    "type": "string"
+                },
+                "bankNumber": {
+                    "description": "External Bank Number",
+                    "type": "string"
+                },
+                "externalRef": {
+                    "description": "Reference Count",
+                    "type": "integer"
+                },
+                "linkStatus": {
+                    "description": "Link Status",
+                    "type": "string"
+                },
+                "lodtFail": {
+                    "description": "Has Failed LODT",
+                    "type": "string"
+                }
+            }
+        },
+        "RetrieveRatesResponse": {
+            "required": [
+                "ratesResponse"
+            ],
+            "properties": {
+                "ratesResponse": {
+                    "description": "Rates of the specific product types.",
+                    "type": "integer"
+                }
+            }
+        },
+        "ActivityWriteResponse": {
+            "properties": {
+                "interactionList": {
+                    "description": "entries of group id and Interaction id",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/interaction"
+                    }
+                }
+            }
+        },
+        "interaction": {
+            "required": [
+                "groupId",
+                "iid"
+            ],
+            "properties": {
+                "groupId": {
+                    "description": "Group Id",
+                    "type": "string"
+                },
+                "iid": {
+                    "description": "Interaction Id",
+                    "type": "string"
+                }
+            }
+        },
+        "ReadActivityWriteResponse": {
+            "properties": {
+                "response": {
+                    "description": "entries of group id and Interaction id",
+                    "type": "string"
+                }
+            }
+        },
+        "LODTVerifyResponse": {
+            "required": [
+                "confirm"
+            ],
+            "properties": {
+                "confirm": {
+                    "description": "Assert if LODT was successful",
+                    "type": "string"
+                }
+            }
+        },
+        "RandomResponse": {
+            "required": [
+                "randomValue"
+            ],
+            "properties": {
+                "randomValue": {
+                    "description": "Number of Random question",
+                    "type": "integer"
+                }
+            }
+        },
+        "MoveMoneyResponse": {
+            "properties": {
+                "confirm": {
+                    "description": "The confirmation number of the transfer",
+                    "type": "integer"
+                }
+            }
+        },
+        "CustAuthResponse": {
+            "properties": {
+                "authresponseList": {
+                    "description": "Array of Account objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CredStatus"
+                    }
+                }
+            }
+        },
+        "CredStatus": {
+            "required": [
+                "creditStatus"
+            ],
+            "properties": {
+                "creditStatus": {
+                    "description": "Customer status after authentication",
+                    "type": "string"
+                }
+            }
+        },
+        "SetCustDetailResponse": {
+            "properties": {
+                "response": {
+                    "description": "response with no error ",
+                    "type": "string"
+                }
+            }
+        },
+        "ErrorResponse": {
+            "description": "Standard error response structure for internal APIs.",
+            "properties": {
+                "id": {
+                    "description": "Error code that identifies the type of error that was encountered.",
+                    "type": "integer"
+                },
+                "developerText": {
+                    "description": "Error message that's meant to be used during development and debugging.",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
