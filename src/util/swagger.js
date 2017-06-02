@@ -299,8 +299,13 @@ function getParamvalues (api, body, parameters, paths) {
                     body = body.replace('#req_body', reqBody);
                 }
                 else if (paramType.in === 'path') {
+                    var uri;
+					if (api.basePath !== undefined) {
+						uri = api.basePath + paths[0];
+					}
+					else { uri = paths[0]; }
                     var url = '{' + paramType.name + '}',
-                        path = body.replace('#path', paths[0]+'$');
+                        path = body.replace('#path', uri+'$');
                     body = path.replace(url, '[^/]+');
                 }
             }
