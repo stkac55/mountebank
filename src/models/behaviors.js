@@ -475,6 +475,18 @@ function lookup (originalRequest, responsePromise, lookupArray, logger) {
     });
 }
 
+function xpathArrayvalues (from, copyConfig, logger) {
+    var xpath = require('./xpath'), xvalue = [];
+    (copyConfig.using.selector).forEach(function (selector) {
+        var selectionFn = function () {
+            var value = xpath.select(selector, copyConfig.using.ns, from, logger);
+            xvalue.push(value);
+        };
+        return getMatches(selectionFn, selector, logger);
+    });
+    return xvalue;
+}
+
 function arrayHandling (originalRequest, responsePromise, config, logger) {
     var Q = require('q');
     return responsePromise.then(function (response) {
