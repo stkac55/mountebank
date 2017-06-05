@@ -116,7 +116,6 @@ function getContentsOrExit (file, server) {
         var message = 'No such file: ' + file;
         if (e.code !== 'ENOENT') {
             message = e;
-
         }
 
         server.close(function () { });
@@ -225,6 +224,29 @@ function serverAt (options) {
         }).done();
     }
 
+    function swagger () {
+        var swaggerparser = require ('../src/util/swagger.js');
+        getConfig(options).then(function (response) {
+			  var fileName = options.swaggerfile;
+			  var ext = fileName.substring(fileName.lastIndexOf('.') + 1);
+				if( (ext.toLowerCase() === 'json') || (ext.toLowerCase() === 'yml') || (ext.toLowerCase() === 'yaml')){
+            swaggerparser.swagger(options.swaggerfile, options.imposterport, options.port);
+			}
+			else{
+			console.error("Error: Please input valid swagger file");
+			}
+        }).catch(function (err) {
+            if (err.code === 'ECONNREFUSED') {
+                console.error('No mb process running on port ' + options.port);
+            }
+            else {
+                console.error(err);
+            }
+            process.exit(1);
+        }).done();
+    }
+    
+
     function replay () {
         options.removeProxies = true;
 
@@ -253,6 +275,7 @@ function serverAt (options) {
         stop: function () { stop().done(function () { process.exit(); }); },
         restart: restart,
         save: save,
+        swagger: swagger,
         replay: replay
     };
 }
@@ -323,13 +346,6 @@ var aliases = {
             alias: aliases.i,
             global: false
         },
-        saveImposters: {
-            default: false,
-            description: 'set to allow save imposters ',
-            type: 'boolean',
-            alias: aliases.si,
-            global: false
-        },
         localOnly: {
             default: false,
             description: 'allow connections only from localhost',
@@ -365,6 +381,18 @@ var aliases = {
             type: 'string',
             global: false
         },
+        swaggerfile: {
+            description: 'swagger file to parse and build imposter',
+            nargs: 1,
+            type: 'string',
+            global: false
+        },
+        imposterport: {
+            description: 'port to post an imposter of swagger',
+            nargs: 1,
+            type: 'string',
+            global: false
+        },
         removeProxies: {
             default: false,
             description: 'removes proxies from the configuration when using the save command',
@@ -387,7 +415,7 @@ var aliases = {
         logfile: options.logfile,
         loglevel: options.loglevel,
         allowInjection: options.allowInjection,
-        saveImposters: options.saveImposters,
+        savefile: options.savefile,
         localOnly: options.localOnly,
         ipWhitelist: options.ipWhitelist,
         mock: options.mock,
@@ -443,6 +471,20 @@ var argv = yargs
             .example('mb save --savefile config.json --removeProxies --port 3000',
                 'Saves the config without proxies into config.json by querying port 3000')
             .example('mb save', 'Saves the config as is into mb.json by querying port 2525')
+            .epilog('For more information, see http://www.mbtest.org/docs/commandLine');
+    })
+    .command('swagger', 'Parses swagger file', function (swaggerYargs) {
+        swaggerYargs
+            .usage('Usage: mb swagger [options...]\n\nParses swagger file, creates an imposter with the port provided')
+            .help('help')
+            .wrap(null)
+            .options({
+                port: options.port,
+                imposterport: options.imposterport,
+                swaggerfile: options.swaggerfile
+            })
+            .example('mb swagger --swaggerfile config.yaml/.yml/.json --imposterport 3000',
+                'Parses swaggerfile and creates an imposter with port 3000')
             .epilog('For more information, see http://www.mbtest.org/docs/commandLine');
     })
     .command('replay',
@@ -520,6 +562,9 @@ try {
             break;
         case 'save':
             server.save();
+            break;
+        case 'swagger':
+            server.swagger();
             break;
         case 'replay':
             server.replay();
