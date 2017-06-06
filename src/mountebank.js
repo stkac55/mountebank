@@ -150,51 +150,50 @@ function create (options) {
 
     function portStored (saveImpostersFile, saveImpostersFileFlag) {
         var fs = require('fs');
-        var portStore = [];  
-        var ImposterDir = './Repository_Template';      
-        if (fs.existsSync(ImposterDir+'/'+saveImpostersFile) === true) {
-            var textFinal = fs.readFileSync(ImposterDir+'/'+saveImpostersFile, 'utf-8');            
-            if ((saveImpostersFileFlag) && (textFinal !== '')) {                
+        var portStore = [];
+        var ImposterDir = './Repository_Template';
+        if (fs.existsSync(ImposterDir + '/' + saveImpostersFile) === true) {
+            var textFinal = fs.readFileSync(ImposterDir + '/' + saveImpostersFile, 'utf-8');
+            if ((saveImpostersFileFlag) && (textFinal !== '')) {
                 var parseImposter = JSON.parse(textFinal);
-                (parseImposter.imposters).forEach(function (parse) {                    
+                (parseImposter.imposters).forEach(function (parse) {
                     portStore.push(parse.port);
                 });
                 if (portStore.length >= 1) {
-                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check ' +ImposterDir+'/'+saveImpostersFile+ ' for stored imposter collections');
+                    logger.warn('These ports are already used ' + portStore + ' use unique ports for imposters. Check ' + ImposterDir + '/' + saveImpostersFile + ' for stored imposter collections');
 
                 }
             }
         }
-        else { 
-            
-            if (!fs.existsSync(ImposterDir)){
+        else {
+
+            if (!fs.existsSync(ImposterDir)) {
                 fs.mkdirSync(ImposterDir);
             }
-            fs.writeFileSync(ImposterDir+'/'+saveImpostersFile, ''); }
+            fs.writeFileSync(ImposterDir + '/' + saveImpostersFile, '');
+        }
     }
 
-    function saveImposterFile (savefile) {
-     if ((options.savefile===true) && (options.savefile!==undefined) ){                    
-                    var saveImpostersFile="mb.json";                    
-                    module.exports.saveImpostersFile = saveImpostersFile;                   
-                    
-                    var saveImpostersFileFlag="true";
-                    module.exports.saveImpostersFileFlag = saveImpostersFileFlag;
-                    portStored (saveImpostersFile, saveImpostersFileFlag);
-                }    
+    function saveImposterFile () {
+        if ((options.savefile === true) && (options.savefile !== undefined)) {
+            var saveImpostersFile = 'mb.json';
+            module.exports.saveImpostersFile = saveImpostersFile;
+            var saveImpostersFileFlag = 'true';
+            module.exports.saveImpostersFileFlag = saveImpostersFileFlag;
+            portStored(saveImpostersFile, saveImpostersFileFlag);
+        }
 
-            else if ((options.savefile).localeCompare('mb.json') === 0) {                                     
-                    module.exports.saveImpostersFileFlag = "false";                    
-                }
-
-            else if ((options.savefile !==true) && (options.savefile!==undefined)) {                             
-                var saveImpostersFile=options.savefile;                    
-                    module.exports.saveImpostersFile = saveImpostersFile;
-                    var saveImpostersFileFlag = "true"
-                    module.exports.saveImpostersFileFlag = saveImpostersFileFlag; 
-                    portStored(saveImpostersFile, saveImpostersFileFlag);                  
-                }
-            }
+        else if ((options.savefile !== true) && (options.savefile !== undefined)) {
+            saveImpostersFile = options.savefile;
+            module.exports.saveImpostersFile = saveImpostersFile;
+            saveImpostersFileFlag = 'true';
+            module.exports.saveImpostersFileFlag = saveImpostersFileFlag;
+            portStored(saveImpostersFile, saveImpostersFileFlag);
+        }
+        else if ((options.savefile).localeCompare('mb.json') === 0) {
+            module.exports.saveImpostersFileFlag = 'false';
+        }
+    }
 
     function isAllowedConnection (ipAddress) {
         return allowedIPs.some(function (allowedIP) {
@@ -210,7 +209,7 @@ function create (options) {
 
             var serverPort;
             serverPort = JSON.stringify(options.port);
-            module.exports.serverPort = serverPort; 
+            module.exports.serverPort = serverPort;
 
             saveImposterFile(options.savefile);
 
