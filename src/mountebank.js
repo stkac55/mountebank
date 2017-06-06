@@ -181,11 +181,7 @@ function create (options) {
                     var saveImpostersFileFlag="true";
                     module.exports.saveImpostersFileFlag = saveImpostersFileFlag;
                     portStored (saveImpostersFile, saveImpostersFileFlag);
-                }    
-
-            else if ((options.savefile).localeCompare('mb.json') === 0) {                                     
-                    module.exports.saveImpostersFileFlag = "false";                    
-                }
+                }                
 
             else if ((options.savefile !==true) && (options.savefile!==undefined)) {                             
                 var saveImpostersFile=options.savefile;                    
@@ -193,6 +189,9 @@ function create (options) {
                     var saveImpostersFileFlag = "true"
                     module.exports.saveImpostersFileFlag = saveImpostersFileFlag; 
                     portStored(saveImpostersFile, saveImpostersFileFlag);                  
+                }
+            else if ((options.savefile).localeCompare('mb.json') === 0) {                                     
+                    module.exports.saveImpostersFileFlag = "false";                    
                 }
             }
 
